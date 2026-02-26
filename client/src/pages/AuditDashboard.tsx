@@ -603,7 +603,7 @@ function LinkingTab({ linking }: { linking: InternalLinking }) {
 }
 
 // ─── History Tab ──────────────────────────────────────────────────────────────
-function HistoryTab({ onRerun }: { onRerun: (url: string, industry: string) => void }) {
+function HistoryTab({ onRerun }: { onRerun: (url: string, industry: string, customIndustry?: string | null) => void }) {
   const { isAuthenticated } = useAuth();
   const history = trpc.audit.list.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -674,7 +674,9 @@ function HistoryTab({ onRerun }: { onRerun: (url: string, industry: string) => v
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                {audit.industry} · {new Date(audit.createdAt).toLocaleDateString()}
+                {audit.industry === "Other" && (audit as any).customIndustry
+                  ? `${(audit as any).customIndustry} (Other)`
+                  : audit.industry} · {new Date(audit.createdAt).toLocaleDateString()}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -687,7 +689,7 @@ function HistoryTab({ onRerun }: { onRerun: (url: string, industry: string) => v
                 </button>
               )}
               <button
-                onClick={() => onRerun(audit.url, audit.industry)}
+                onClick={() => onRerun(audit.url, audit.industry, (audit as any).customIndustry)}
                 className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-1.5 hover:border-blue-500/50"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -752,9 +754,12 @@ export default function AuditDashboard() {
     }
   };
 
-  const handleRerun = (url: string, industry: string) => {
-    // Navigate to home with pre-fill params
-    navigate(`/?url=${encodeURIComponent(url)}&industry=${encodeURIComponent(industry)}`);
+  const handleRerun = (url: string, industry: string, customIndustry?: string | null) => {
+    let path = `/?url=${encodeURIComponent(url)}&industry=${encodeURIComponent(industry)}`;
+    if (industry === "Other" && customIndustry) {
+      path += `&customIndustry=${encodeURIComponent(customIndustry)}`;
+    }
+    navigate(path);
   };
 
   if (auditQuery.isLoading) {
@@ -831,7 +836,11 @@ export default function AuditDashboard() {
             </p>
           </div>
           <div className="shrink-0 flex items-center gap-2">
-            <span className="text-xs text-muted-foreground hidden sm:block">{audit.industry}</span>
+            <span className="text-xs text-muted-foreground hidden sm:block">
+              {audit.industry === "Other" && (audit as any).customIndustry
+                ? (audit as any).customIndustry
+                : audit.industry}
+            </span>
             <MiniScoreRing score={audit.overallScore} size={40} />
             {/* Theme toggle */}
             <Button
@@ -907,7 +916,7 @@ export default function AuditDashboard() {
           />
         )}
         {activeTab === "Linking" && linking && <LinkingTab linking={linking} />}
-        {activeTab === "History" && <HistoryTab onRerun={handleRerun} />}
+        {activeTab === "History" && <HistoryTab onRerun={(url, ind, ci) => handleRerun(url, ind, ci)} />}
 
         {/* Fallback for missing data */}
         {activeTab !== "History" && !tabHasData[activeTab] && (

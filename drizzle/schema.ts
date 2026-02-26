@@ -32,6 +32,7 @@ export const audits = mysqlTable("audits", {
   userId: int("userId").references(() => users.id),
   url: varchar("url", { length: 2048 }).notNull(),
   industry: varchar("industry", { length: 128 }).notNull(),
+  customIndustry: varchar("customIndustry", { length: 256 }),
   overallScore: int("overallScore").default(0).notNull(),
   overview: json("overview"),
   contentAudit: json("contentAudit"),

@@ -33,27 +33,31 @@ export const appRouter = router({
 
   audit: router({
     // Run a full SEO audit
-    run: publicProcedure
+      run: publicProcedure
       .input(
         z.object({
           url: z.string().url("Please enter a valid URL"),
           industry: z.string().min(1, "Please select an industry"),
+          customIndustry: z.string().optional(),
         })
       )
       .mutation(async ({ input, ctx }) => {
         const userId = ctx.user?.id ?? null;
         const startTime = Date.now();
-
+        // Build the effective industry context for the AI engine
+        const effectiveIndustry =
+          input.industry === "Other" && input.customIndustry?.trim()
+            ? input.customIndustry.trim()
+            : input.industry;
         const auditId = await createAudit({
           userId,
           url: input.url,
           industry: input.industry,
+          customIndustry: input.customIndustry ?? null,
         });
-
         await updateAuditStatus(auditId, "running");
-
         try {
-          const result = await runFullAudit(input.url, input.industry);
+          const result = await runFullAudit(input.url, effectiveIndustry);
           const durationMs = Date.now() - startTime;
 
           await updateAuditResults(auditId, {

@@ -37,17 +37,28 @@ export default function Home() {
   const prefillUrl = searchParams.get("url") ?? "";
   const prefillIndustry = searchParams.get("industry") ?? "";
 
+  const prefillCustomIndustry = searchParams.get("customIndustry") ?? "";
   const [url, setUrl] = useState(prefillUrl);
   const [industry, setIndustry] = useState(prefillIndustry);
+  const [customIndustry, setCustomIndustry] = useState(prefillCustomIndustry);
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState(0);
   const urlInputRef = useRef<HTMLInputElement>(null);
+  const customInputRef = useRef<HTMLInputElement>(null);
 
   // Update state if prefill changes (e.g., from re-run)
   useEffect(() => {
     if (prefillUrl) setUrl(prefillUrl);
     if (prefillIndustry) setIndustry(prefillIndustry);
-  }, [prefillUrl, prefillIndustry]);
+    if (prefillCustomIndustry) setCustomIndustry(prefillCustomIndustry);
+  }, [prefillUrl, prefillIndustry, prefillCustomIndustry]);
+
+  // Focus the custom input when Other is selected
+  useEffect(() => {
+    if (industry === "Other") {
+      setTimeout(() => customInputRef.current?.focus(), 50);
+    }
+  }, [industry]);
 
   const recentAudits = trpc.audit.recent.useQuery(undefined, {
     refetchOnWindowFocus: false,
@@ -78,19 +89,29 @@ export default function Home() {
   const handleAudit = () => {
     if (!url.trim()) { toast.error("Please enter a URL"); return; }
     if (!industry) { toast.error("Please select an industry"); return; }
+    if (industry === "Other" && !customIndustry.trim()) {
+      toast.error("Please enter your business name or type");
+      customInputRef.current?.focus();
+      return;
+    }
     let normalizedUrl = url.trim();
     if (!normalizedUrl.startsWith("http")) normalizedUrl = "https://" + normalizedUrl;
     setLoading(true);
-    runAudit.mutate({ url: normalizedUrl, industry });
+    runAudit.mutate({
+      url: normalizedUrl,
+      industry,
+      customIndustry: industry === "Other" ? customIndustry.trim() : undefined,
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") handleAudit();
   };
 
-  const prefillAudit = (recentUrl: string, recentIndustry: string) => {
+  const prefillAudit = (recentUrl: string, recentIndustry: string, recentCustomIndustry?: string | null) => {
     setUrl(recentUrl);
     setIndustry(recentIndustry);
+    if (recentCustomIndustry) setCustomIndustry(recentCustomIndustry);
     urlInputRef.current?.focus();
   };
 
@@ -236,7 +257,7 @@ export default function Home() {
                     autoFocus
                   />
                 </div>
-                <Select value={industry} onValueChange={setIndustry}>
+                <Select value={industry} onValueChange={(val) => { setIndustry(val); if (val !== "Other") setCustomIndustry(""); }}>
                   <SelectTrigger className="sm:w-48 h-12 bg-background border-border text-foreground">
                     <SelectValue placeholder="Select industry" />
                   </SelectTrigger>
@@ -249,9 +270,27 @@ export default function Home() {
                   </SelectContent>
                 </Select>
               </div>
+              {/* Custom business name input — shown only when Other is selected */}
+              {industry === "Other" && (
+                <div className="relative">
+                  <Input
+                    ref={customInputRef}
+                    type="text"
+                    placeholder="e.g. Pet Grooming, Wedding Photography, Auto Repair..."
+                    value={customIndustry}
+                    onChange={(e) => setCustomIndustry(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="h-12 bg-background border-blue-500/50 text-foreground placeholder:text-muted-foreground focus:border-blue-500 ring-1 ring-blue-500/20"
+                    maxLength={100}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                    {customIndustry.length}/100
+                  </span>
+                </div>
+              )}
               <Button
                 onClick={handleAudit}
-                disabled={!url.trim() || !industry}
+                disabled={!url.trim() || !industry || (industry === "Other" && !customIndustry.trim())}
                 className="h-12 text-base font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all"
               >
                 <Zap className="w-4 h-4 mr-2" />
@@ -297,7 +336,7 @@ export default function Home() {
                 return (
                   <button
                     key={audit.id}
-                    onClick={() => prefillAudit(audit.url, audit.industry)}
+                    onClick={() => prefillAudit(audit.url, audit.industry, (audit as any).customIndustry)}
                     className="flex items-center gap-4 bg-card border border-border rounded-lg px-4 py-3 hover:border-blue-500/50 hover:bg-accent/30 transition-all text-left group"
                   >
                     <div className={`w-10 h-10 rounded-lg ${bgColor} border flex items-center justify-center shrink-0`}>
@@ -308,7 +347,9 @@ export default function Home() {
                         {audit.url.replace(/^https?:\/\//, "")}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {audit.industry} · {new Date(audit.createdAt).toLocaleDateString()}
+                        {audit.industry === "Other" && (audit as any).customIndustry
+                          ? `${(audit as any).customIndustry} (Other)`
+                          : audit.industry} · {new Date(audit.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

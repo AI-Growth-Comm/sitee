@@ -210,6 +210,7 @@ export interface AuditData {
   userId: number | null;
   url: string;
   industry: string;
+  customIndustry: string | null;
   overallScore: number;
   overview: Overview | null;
   contentAudit: ContentAudit | null;
@@ -250,9 +251,9 @@ export const INDUSTRIES = [
   "Finance",
   "Restaurant",
   "Education",
-  "General Business",
+   "General Business",
+  "Other",
 ] as const;
-
 export type Industry = (typeof INDUSTRIES)[number];
 
 export const DIMENSION_NAMES = [

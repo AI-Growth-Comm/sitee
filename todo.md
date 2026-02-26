@@ -117,3 +117,14 @@
 - [x] Light/Dark theme toggle in nav (sun/moon icon)
 - [x] Theme toggle persists via localStorage
 - [x] Update all pages to support both light and dark themes
+
+## "Other" Industry & Custom Business Name (v4)
+- [x] Add "Other" as last option in industry dropdown
+- [x] Show custom business name text input when "Other" is selected
+- [x] Validate: business name required when industry is "Other"
+- [x] Pass customIndustry field through tRPC audit.run mutation
+- [x] Update DB schema: add customIndustry column to audits table
+- [x] Run db:push for customIndustry column
+- [x] Update AI engine: use customIndustry as the industry context in all 7 LLM calls
+- [x] Show custom business name in dashboard nav and report cover page
+- [x] Pre-fill business name on Re-run from history

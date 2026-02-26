@@ -59,6 +59,7 @@ export async function createAudit(data: {
   userId: number | null;
   url: string;
   industry: string;
+  customIndustry?: string | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -66,6 +67,7 @@ export async function createAudit(data: {
     userId: data.userId,
     url: data.url,
     industry: data.industry,
+    customIndustry: data.customIndustry ?? null,
     overallScore: 0,
     status: "pending",
   });
