@@ -1,11 +1,10 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import { audits, checklistProgress, InsertUser, users } from "../drizzle/schema";
+import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -19,25 +18,15 @@ export async function getDb() {
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) {
-    throw new Error("User openId is required for upsert");
-  }
-
+  if (!user.openId) throw new Error("User openId is required for upsert");
   const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
-    return;
-  }
+  if (!db) { console.warn("[Database] Cannot upsert user: database not available"); return; }
 
   try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
+    const values: InsertUser = { openId: user.openId };
     const updateSet: Record<string, unknown> = {};
-
     const textFields = ["name", "email", "loginMethod"] as const;
     type TextField = (typeof textFields)[number];
-
     const assignNullable = (field: TextField) => {
       const value = user[field];
       if (value === undefined) return;
@@ -45,32 +34,13 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values[field] = normalized;
       updateSet[field] = normalized;
     };
-
     textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
-    }
-
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
-
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
+    if (user.lastSignedIn !== undefined) { values.lastSignedIn = user.lastSignedIn; updateSet.lastSignedIn = user.lastSignedIn; }
+    if (user.role !== undefined) { values.role = user.role; updateSet.role = user.role; }
+    else if (user.openId === ENV.ownerOpenId) { values.role = "admin"; updateSet.role = "admin"; }
+    if (!values.lastSignedIn) values.lastSignedIn = new Date();
+    if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
+    await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;
@@ -79,14 +49,165 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
-  }
-
+  if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ─── Audit helpers ────────────────────────────────────────────────────────────
+
+export async function createAudit(data: {
+  userId: number | null;
+  url: string;
+  industry: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(audits).values({
+    userId: data.userId,
+    url: data.url,
+    industry: data.industry,
+    overallScore: 0,
+    status: "pending",
+  });
+  return result[0].insertId as number;
+}
+
+export async function updateAuditStatus(
+  id: number,
+  status: "pending" | "running" | "complete" | "failed",
+  errorMsg?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(audits).set({ status, errorMsg: errorMsg ?? null }).where(eq(audits.id, id));
+}
+
+export async function updateAuditResults(
+  id: number,
+  data: {
+    overallScore: number;
+    overview: unknown;
+    keywords: unknown;
+    metadata: unknown;
+    schemaData: unknown;
+    calendar: unknown;
+    checklist: unknown;
+    linking: unknown;
+    durationMs: number;
+  }
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(audits)
+    .set({
+      overallScore: data.overallScore,
+      overview: data.overview,
+      keywords: data.keywords,
+      metadata: data.metadata,
+      schemaData: data.schemaData,
+      calendar: data.calendar,
+      checklist: data.checklist,
+      linking: data.linking,
+      durationMs: data.durationMs,
+      status: "complete",
+    })
+    .where(eq(audits.id, id));
+}
+
+export async function getAuditById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.select().from(audits).where(eq(audits.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function listAuditsForUser(userId: number, limit = 20) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db
+    .select()
+    .from(audits)
+    .where(eq(audits.userId, userId))
+    .orderBy(desc(audits.createdAt))
+    .limit(limit);
+}
+
+export async function listRecentAudits(userId: number | null, limit = 3) {
+  const db = await getDb();
+  if (!db) return [];
+  if (userId) {
+    return db
+      .select({
+        id: audits.id,
+        url: audits.url,
+        industry: audits.industry,
+        overallScore: audits.overallScore,
+        createdAt: audits.createdAt,
+      })
+      .from(audits)
+      .where(and(eq(audits.userId, userId), eq(audits.status, "complete")))
+      .orderBy(desc(audits.createdAt))
+      .limit(limit);
+  }
+  return [];
+}
+
+// ─── Checklist progress helpers ───────────────────────────────────────────────
+
+export async function getChecklistProgress(auditId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(checklistProgress)
+    .where(
+      and(
+        eq(checklistProgress.auditId, auditId),
+        eq(checklistProgress.userId, userId)
+      )
+    );
+}
+
+export async function upsertChecklistItem(data: {
+  auditId: number;
+  userId: number;
+  itemId: string;
+  done: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db
+    .select()
+    .from(checklistProgress)
+    .where(
+      and(
+        eq(checklistProgress.auditId, data.auditId),
+        eq(checklistProgress.userId, data.userId),
+        eq(checklistProgress.itemId, data.itemId)
+      )
+    )
+    .limit(1);
+
+  if (existing.length > 0) {
+    await db
+      .update(checklistProgress)
+      .set({ done: data.done, doneAt: data.done ? new Date() : null })
+      .where(
+        and(
+          eq(checklistProgress.auditId, data.auditId),
+          eq(checklistProgress.userId, data.userId),
+          eq(checklistProgress.itemId, data.itemId)
+        )
+      );
+  } else {
+    await db.insert(checklistProgress).values({
+      auditId: data.auditId,
+      userId: data.userId,
+      itemId: data.itemId,
+      done: data.done,
+      doneAt: data.done ? new Date() : null,
+    });
+  }
+}

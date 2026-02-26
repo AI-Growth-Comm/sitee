@@ -1,0 +1,46 @@
+{
+  "query": "SHOW TABLES; DESCRIBE users;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3KfQ3mGqqbXxpjB.40c3cc4c4312 --database 7fQ4QpD55FVLS2ZmmpKdeF --execute SHOW TABLES; DESCRIBE users;",
+  "rows": [
+    {
+      "Tables_in_7fQ4QpD55FVLS2ZmmpKdeF": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_7fQ4QpD55FVLS2ZmmpKdeF": "users"
+    },
+    {
+      "Tables_in_7fQ4QpD55FVLS2ZmmpKdeF": "Field\tType\tNull\tKey\tDefault\tExtra"
+    },
+    {
+      "Tables_in_7fQ4QpD55FVLS2ZmmpKdeF": "id\tint(11)\tNO\tPRI\tNULL\tauto_increment"
+    },
+    {
+      "Tables_in_7fQ4QpD55FVLS2ZmmpKdeF": "openId\tvarchar(64)\tNO\tUNI\tNULL\t"
+    },
+    {
+      "Tables_in_7fQ4QpD55FVLS2ZmmpKdeF": "name\ttext\tYES\t\tNULL\t"
+    },
+    {
+      "Tables_in_7fQ4QpD55FVLS2ZmmpKdeF": "email\tvarchar(320)\tYES\t\tNULL\t"
+    },
+    {
+      "Tables_in_7fQ4QpD55FVLS2ZmmpKdeF": "loginMethod\tvarchar(64)\tYES\t\tNULL\t"
+    },
+    {
+      "Tables_in_7fQ4QpD55FVLS2ZmmpKdeF": "role\tenum('user','admin')\tNO\t\tuser\t"
+    },
+    {
+      "Tables_in_7fQ4QpD55FVLS2ZmmpKdeF": "createdAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t"
+    },
+    {
+      "Tables_in_7fQ4QpD55FVLS2ZmmpKdeF": "updatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "Tables_in_7fQ4QpD55FVLS2ZmmpKdeF": "lastSignedIn\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_7fQ4QpD55FVLS2ZmmpKdeF\n__drizzle_migrations\nusers\nField\tType\tNull\tKey\tDefault\tExtra\nid\tint(11)\tNO\tPRI\tNULL\tauto_increment\nopenId\tvarchar(64)\tNO\tUNI\tNULL\t\nname\ttext\tYES\t\tNULL\t\nemail\tvarchar(320)\tYES\t\tNULL\t\nloginMethod\tvarchar(64)\tYES\t\tNULL\t\nrole\tenum('user','admin')\tNO\t\tuser\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\nlastSignedIn\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\n",
+  "stderr": "",
+  "execution_time_ms": 50
+}
