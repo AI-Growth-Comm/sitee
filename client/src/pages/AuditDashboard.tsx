@@ -10,8 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft, Zap, Copy, Check, Download, RotateCcw,
-  ChevronDown, ChevronUp, ExternalLink, Link2, AlertCircle
+  ChevronDown, ChevronUp, ExternalLink, Link2, AlertCircle,
+  Moon, Sun, FileText, BookOpen
 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import type {
   Overview, Keywords, Metadata, SchemaData,
   ContentCalendar, Checklist, InternalLinking
@@ -705,6 +707,7 @@ export default function AuditDashboard() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<Tab>("Overview");
   const { isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const auditId = parseInt(params.id ?? "0", 10);
 
@@ -830,6 +833,37 @@ export default function AuditDashboard() {
           <div className="shrink-0 flex items-center gap-2">
             <span className="text-xs text-muted-foreground hidden sm:block">{audit.industry}</span>
             <MiniScoreRing score={audit.overallScore} size={40} />
+            {/* Theme toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTheme}
+              className="w-8 h-8 p-0 text-muted-foreground hover:text-foreground"
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
+            {/* Generate Report button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/audit/${auditId}/report`)}
+              className="gap-1.5 border-blue-500/30 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 hidden sm:flex"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Report
+            </Button>
+            {isAuthenticated && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/reports")}
+                className="gap-1.5 text-muted-foreground hover:text-foreground hidden md:flex"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                Saved
+              </Button>
+            )}
           </div>
         </div>
 

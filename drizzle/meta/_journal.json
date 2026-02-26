@@ -8,6 +8,20 @@
       "when": 1772078261153,
       "tag": "0000_gigantic_vengeance",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1772081012853,
+      "tag": "0001_petite_talos",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772081989356,
+      "tag": "0002_military_grey_gargoyle",
+      "breakpoints": true
     }
   ]
 }

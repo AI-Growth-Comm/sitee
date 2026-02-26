@@ -6,10 +6,14 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
   createAudit,
+  deleteReport,
   getAuditById,
   getChecklistProgress,
+  getReportById,
   listAuditsForUser,
   listRecentAudits,
+  listReportsForUser,
+  saveReport,
   updateAuditResults,
   updateAuditStatus,
   upsertChecklistItem,
@@ -28,7 +32,7 @@ export const appRouter = router({
   }),
 
   audit: router({
-    // Run a full SEO audit (can be used by guests too, but saves to DB if logged in)
+    // Run a full SEO audit
     run: publicProcedure
       .input(
         z.object({
@@ -40,7 +44,6 @@ export const appRouter = router({
         const userId = ctx.user?.id ?? null;
         const startTime = Date.now();
 
-        // Create audit record
         const auditId = await createAudit({
           userId,
           url: input.url,
@@ -56,12 +59,14 @@ export const appRouter = router({
           await updateAuditResults(auditId, {
             overallScore: result.overallScore,
             overview: result.overview,
+            contentAudit: result.contentAudit,
             keywords: result.keywords,
             metadata: result.metadata,
             schemaData: result.schemaData,
             calendar: result.calendar,
             checklist: result.checklist,
             linking: result.linking,
+            roadmap: result.roadmap,
             durationMs,
           });
 
@@ -69,10 +74,7 @@ export const appRouter = router({
         } catch (err) {
           const msg = err instanceof Error ? err.message : "Unknown error";
           await updateAuditStatus(auditId, "failed", msg);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: msg,
-          });
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: msg });
         }
       }),
 
@@ -83,7 +85,6 @@ export const appRouter = router({
         const audit = await getAuditById(input.id);
         if (!audit) throw new TRPCError({ code: "NOT_FOUND", message: "Audit not found" });
 
-        // Merge checklist progress if user is logged in
         let checklistDoneMap: Record<string, boolean> = {};
         if (ctx.user && audit.checklist) {
           const progress = await getChecklistProgress(input.id, ctx.user.id);
@@ -107,13 +108,7 @@ export const appRouter = router({
 
     // Update a checklist item's done state
     toggleChecklist: protectedProcedure
-      .input(
-        z.object({
-          auditId: z.number(),
-          itemId: z.string(),
-          done: z.boolean(),
-        })
-      )
+      .input(z.object({ auditId: z.number(), itemId: z.string(), done: z.boolean() }))
       .mutation(async ({ input, ctx }) => {
         await upsertChecklistItem({
           auditId: input.auditId,
@@ -131,10 +126,12 @@ export const appRouter = router({
         const audit = await getAuditById(input.id);
         if (!audit) throw new TRPCError({ code: "NOT_FOUND" });
 
-        const checklist = audit.checklist as { items: Array<{
-          id: string; category: string; task: string;
-          priority: string; phase: string; impact: string; done: boolean;
-        }> } | null;
+        const checklist = audit.checklist as {
+          items: Array<{
+            id: string; category: string; task: string;
+            priority: string; phase: string; impact: string; done: boolean;
+          }>;
+        } | null;
 
         if (!checklist?.items) return { csv: "" };
 
@@ -158,6 +155,65 @@ export const appRouter = router({
         ];
 
         return { csv: rows.map((r) => r.join(",")).join("\n") };
+      }),
+  }),
+
+  // ─── Reports ─────────────────────────────────────────────────────────────────
+  report: router({
+    // Save a report for an audit
+    save: protectedProcedure
+      .input(z.object({
+        auditId: z.number(),
+        title: z.string().min(1).max(256),
+        clientName: z.string().min(1).max(256),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Verify the audit exists
+        const audit = await getAuditById(input.auditId);
+        if (!audit) throw new TRPCError({ code: "NOT_FOUND", message: "Audit not found" });
+        if (audit.status !== "complete") throw new TRPCError({ code: "BAD_REQUEST", message: "Audit is not complete" });
+
+        const reportId = await saveReport({
+          auditId: input.auditId,
+          userId: ctx.user.id,
+          title: input.title,
+          clientName: input.clientName,
+        });
+
+        return { reportId };
+      }),
+
+    // List all saved reports for the current user
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return listReportsForUser(ctx.user.id, 50);
+    }),
+
+    // Get a single report with its audit data
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input, ctx }) => {
+        const report = await getReportById(input.id);
+        if (!report) throw new TRPCError({ code: "NOT_FOUND" });
+        if (report.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+
+        const audit = await getAuditById(report.auditId);
+        if (!audit) throw new TRPCError({ code: "NOT_FOUND", message: "Audit data not found" });
+
+        let checklistDoneMap: Record<string, boolean> = {};
+        if (audit.checklist) {
+          const progress = await getChecklistProgress(report.auditId, ctx.user.id);
+          for (const p of progress) checklistDoneMap[p.itemId] = p.done;
+        }
+
+        return { report, audit, checklistDoneMap };
+      }),
+
+    // Delete a saved report
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await deleteReport(input.id, ctx.user.id);
+        return { success: true };
       }),
   }),
 });

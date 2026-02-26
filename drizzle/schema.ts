@@ -34,12 +34,14 @@ export const audits = mysqlTable("audits", {
   industry: varchar("industry", { length: 128 }).notNull(),
   overallScore: int("overallScore").default(0).notNull(),
   overview: json("overview"),
+  contentAudit: json("contentAudit"),
   keywords: json("keywords"),
   metadata: json("metadata"),
   schemaData: json("schemaData"),
   calendar: json("calendar"),
   checklist: json("checklist"),
   linking: json("linking"),
+  roadmap: json("roadmap"),
   status: mysqlEnum("status", ["pending", "running", "complete", "failed"])
     .default("pending")
     .notNull(),
@@ -68,3 +70,19 @@ export const checklistProgress = mysqlTable("checklist_progress", {
 
 export type ChecklistProgress = typeof checklistProgress.$inferSelect;
 export type InsertChecklistProgress = typeof checklistProgress.$inferInsert;
+
+export const reports = mysqlTable("reports", {
+  id: int("id").autoincrement().primaryKey(),
+  auditId: int("auditId")
+    .notNull()
+    .references(() => audits.id),
+  userId: int("userId")
+    .notNull()
+    .references(() => users.id),
+  title: varchar("title", { length: 256 }).notNull(),
+  clientName: varchar("clientName", { length: 256 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Report = typeof reports.$inferSelect;
+export type InsertReport = typeof reports.$inferInsert;

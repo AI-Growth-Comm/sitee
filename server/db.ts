@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { audits, checklistProgress, InsertUser, users } from "../drizzle/schema";
+import { audits, checklistProgress, reports, InsertUser, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -21,7 +21,6 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required for upsert");
   const db = await getDb();
   if (!db) { console.warn("[Database] Cannot upsert user: database not available"); return; }
-
   try {
     const values: InsertUser = { openId: user.openId };
     const updateSet: Record<string, unknown> = {};
@@ -88,12 +87,14 @@ export async function updateAuditResults(
   data: {
     overallScore: number;
     overview: unknown;
+    contentAudit: unknown;
     keywords: unknown;
     metadata: unknown;
     schemaData: unknown;
     calendar: unknown;
     checklist: unknown;
     linking: unknown;
+    roadmap: unknown;
     durationMs: number;
   }
 ) {
@@ -104,12 +105,14 @@ export async function updateAuditResults(
     .set({
       overallScore: data.overallScore,
       overview: data.overview,
+      contentAudit: data.contentAudit,
       keywords: data.keywords,
       metadata: data.metadata,
       schemaData: data.schemaData,
       calendar: data.calendar,
       checklist: data.checklist,
       linking: data.linking,
+      roadmap: data.roadmap,
       durationMs: data.durationMs,
       status: "complete",
     })
@@ -145,7 +148,6 @@ export async function listRecentAudits(userId: number | null, limit = 3) {
     createdAt: audits.createdAt,
   };
   if (userId) {
-    // Logged-in: show their own recent audits
     return db
       .select(selectFields)
       .from(audits)
@@ -153,7 +155,6 @@ export async function listRecentAudits(userId: number | null, limit = 3) {
       .orderBy(desc(audits.createdAt))
       .limit(limit);
   }
-  // Guest: show the most recent completed audits globally
   return db
     .select(selectFields)
     .from(audits)
@@ -170,12 +171,7 @@ export async function getChecklistProgress(auditId: number, userId: number) {
   return db
     .select()
     .from(checklistProgress)
-    .where(
-      and(
-        eq(checklistProgress.auditId, auditId),
-        eq(checklistProgress.userId, userId)
-      )
-    );
+    .where(and(eq(checklistProgress.auditId, auditId), eq(checklistProgress.userId, userId)));
 }
 
 export async function upsertChecklistItem(data: {
@@ -189,26 +185,22 @@ export async function upsertChecklistItem(data: {
   const existing = await db
     .select()
     .from(checklistProgress)
-    .where(
-      and(
-        eq(checklistProgress.auditId, data.auditId),
-        eq(checklistProgress.userId, data.userId),
-        eq(checklistProgress.itemId, data.itemId)
-      )
-    )
+    .where(and(
+      eq(checklistProgress.auditId, data.auditId),
+      eq(checklistProgress.userId, data.userId),
+      eq(checklistProgress.itemId, data.itemId)
+    ))
     .limit(1);
 
   if (existing.length > 0) {
     await db
       .update(checklistProgress)
       .set({ done: data.done, doneAt: data.done ? new Date() : null })
-      .where(
-        and(
-          eq(checklistProgress.auditId, data.auditId),
-          eq(checklistProgress.userId, data.userId),
-          eq(checklistProgress.itemId, data.itemId)
-        )
-      );
+      .where(and(
+        eq(checklistProgress.auditId, data.auditId),
+        eq(checklistProgress.userId, data.userId),
+        eq(checklistProgress.itemId, data.itemId)
+      ));
   } else {
     await db.insert(checklistProgress).values({
       auditId: data.auditId,
@@ -218,4 +210,42 @@ export async function upsertChecklistItem(data: {
       doneAt: data.done ? new Date() : null,
     });
   }
+}
+
+// ─── Report helpers ───────────────────────────────────────────────────────────
+
+export async function saveReport(data: {
+  auditId: number;
+  userId: number;
+  title: string;
+  clientName: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(reports).values(data);
+  return result[0].insertId as number;
+}
+
+export async function listReportsForUser(userId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(reports)
+    .where(eq(reports.userId, userId))
+    .orderBy(desc(reports.createdAt))
+    .limit(limit);
+}
+
+export async function deleteReport(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(reports).where(and(eq(reports.id, id), eq(reports.userId, userId)));
+}
+
+export async function getReportById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.select().from(reports).where(eq(reports.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
 }

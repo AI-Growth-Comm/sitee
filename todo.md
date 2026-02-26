@@ -83,3 +83,37 @@
 - [x] Recent audits panel shows global audits for guests
 - [x] Add Linking tab (8th tab) with topical clusters and immediate link opportunities
 - [x] Loading overlay: real progress bar with step counter and percentage
+
+## Report Generation & Saving (v3)
+- [x] Extend AI engine: add Executive Summary with Current State Scorecard
+- [x] Extend AI engine: add Content Audit & Page Inventory table
+- [x] Extend AI engine: add Competitor Landscape & Content Gap Analysis table
+- [x] Extend AI engine: add Long-Tail Keyword Opportunity Matrix (Tier 1/2/3)
+- [x] Extend AI engine: add Topical Cluster Architecture (Pillar 1 & 2 with linking behavior)
+- [x] Extend AI engine: add Immediate Internal Linking Actions table
+- [x] Extend AI engine: add Neighborhood/Page Cross-Linking Map
+- [x] Extend AI engine: add 90-Day Priority Action Roadmap (Phase 1/2/3)
+- [x] Extend AI engine: add KPIs & Success Metrics table
+- [x] Extend shared types for all new sections
+- [x] Update DB schema: add reports table (savedAt, title, auditId, pdfUrl)
+- [x] Run db:push for new reports table
+- [x] Build Report Viewer page (/audit/:id/report) with all 4 modules
+- [x] Report cover page: client URL, industry, audit date, maturity level
+- [x] Module 1: Executive Summary + Current State Scorecard
+- [x] Module 1: Content Audit & Page Inventory table
+- [x] Module 1: Competitor Landscape & Content Gap Analysis
+- [x] Module 1: Long-Tail Keyword Matrix (Tier 1/2/3)
+- [x] Module 2: Metadata Rewrites (current vs optimized, all pages)
+- [x] Module 3: Internal Linking Architecture
+- [x] Module 3: Topical Cluster Architecture (Pillar 1 & 2)
+- [x] Module 3: Immediate Internal Linking Actions table
+- [x] Module 3: Cross-Linking Map
+- [x] Module 4: 90-Day Priority Action Roadmap (Phase 1/2/3)
+- [x] Module 4: KPIs & Success Metrics table
+- [x] PDF export of full report (browser print-to-PDF via dedicated print stylesheet)
+- [x] Save report button: saves report record to DB with timestamp
+- [x] Saved Reports page (/reports): list all saved reports, view/delete
+- [x] Add "View Report" button to audit dashboard
+- [x] Light/Dark theme toggle in nav (sun/moon icon)
+- [x] Theme toggle persists via localStorage
+- [x] Update all pages to support both light and dark themes

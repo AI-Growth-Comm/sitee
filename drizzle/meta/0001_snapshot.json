@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "c84af95d-e8ba-4c22-ac04-bb63ffba853c",
-  "prevId": "6d5cc4a5-facc-4eb5-a5db-e81e11300f82",
+  "id": "a409d389-1955-494e-b103-fbeb0a2b30d7",
+  "prevId": "fa98b479-747c-429b-b6ca-b6c9f7ced20e",
   "tables": {
     "audits": {
       "name": "audits",
@@ -48,56 +48,63 @@
           "type": "json",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "('{}')"
+          "autoincrement": false
+        },
+        "contentAudit": {
+          "name": "contentAudit",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "keywords": {
           "name": "keywords",
           "type": "json",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "('{}')"
+          "autoincrement": false
         },
         "metadata": {
           "name": "metadata",
           "type": "json",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "('{}')"
+          "autoincrement": false
         },
         "schemaData": {
           "name": "schemaData",
           "type": "json",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "('{}')"
+          "autoincrement": false
         },
         "calendar": {
           "name": "calendar",
           "type": "json",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "('{}')"
+          "autoincrement": false
         },
         "checklist": {
           "name": "checklist",
           "type": "json",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "('{}')"
+          "autoincrement": false
         },
         "linking": {
           "name": "linking",
           "type": "json",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "('{}')"
+          "autoincrement": false
+        },
+        "roadmap": {
+          "name": "roadmap",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "status": {
           "name": "status",
@@ -253,6 +260,93 @@
       "compositePrimaryKeys": {
         "checklist_progress_id": {
           "name": "checklist_progress_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "reports": {
+      "name": "reports",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "auditId": {
+          "name": "auditId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clientName": {
+          "name": "clientName",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "reports_auditId_audits_id_fk": {
+          "name": "reports_auditId_audits_id_fk",
+          "tableFrom": "reports",
+          "tableTo": "audits",
+          "columnsFrom": [
+            "auditId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "reports_userId_users_id_fk": {
+          "name": "reports_userId_users_id_fk",
+          "tableFrom": "reports",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "reports_id": {
+          "name": "reports_id",
           "columns": [
             "id"
           ]

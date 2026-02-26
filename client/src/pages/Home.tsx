@@ -3,6 +3,7 @@ import { useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useTheme } from "@/contexts/ThemeContext";
 import { getLoginUrl } from "@/const";
 import { INDUSTRIES } from "../../../shared/auditTypes";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Zap, BarChart3, Clock, ChevronRight, LogIn, FileText, Target, Calendar } from "lucide-react";
+import { Search, Zap, BarChart3, ChevronRight, LogIn, FileText, Target, Calendar, Moon, Sun, BookOpen } from "lucide-react";
 
 const STAGE_MESSAGES = [
   "📊 Scoring 8 SEO dimensions...",
@@ -29,6 +30,7 @@ export default function Home() {
   const [, navigate] = useLocation();
   const search = useSearch();
   const { user, isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   // Support pre-fill from re-run navigation
   const searchParams = new URLSearchParams(search);
@@ -161,10 +163,31 @@ export default function Home() {
             <span className="font-bold text-lg text-foreground">RankIQ</span>
             <Badge variant="secondary" className="text-xs hidden sm:inline-flex">AI-Powered SEO</Badge>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Theme toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTheme}
+              className="w-9 h-9 p-0 text-muted-foreground hover:text-foreground"
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
+            {isAuthenticated && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/reports")}
+                className="gap-1.5 text-muted-foreground hover:text-foreground"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Saved Reports</span>
+              </Button>
+            )}
             {isAuthenticated ? (
-              <span className="text-sm text-muted-foreground">
-                Welcome, <span className="text-foreground font-medium">{user?.name?.split(" ")[0] ?? "User"}</span>
+              <span className="text-sm text-muted-foreground hidden sm:block">
+                <span className="text-foreground font-medium">{user?.name?.split(" ")[0] ?? "User"}</span>
               </span>
             ) : (
               <a
@@ -172,7 +195,7 @@ export default function Home() {
                 className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-1.5 hover:border-blue-500/50"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                Sign in to save audits
+                <span className="hidden sm:inline">Sign in to save</span>
               </a>
             )}
           </div>

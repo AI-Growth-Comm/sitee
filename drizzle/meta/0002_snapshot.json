@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "fa98b479-747c-429b-b6ca-b6c9f7ced20e",
-  "prevId": "c84af95d-e8ba-4c22-ac04-bb63ffba853c",
+  "id": "e131e29c-6e44-489d-ae68-e7150d9a5fcb",
+  "prevId": "fa98b479-747c-429b-b6ca-b6c9f7ced20e",
   "tables": {
     "audits": {
       "name": "audits",
@@ -50,6 +50,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "contentAudit": {
+          "name": "contentAudit",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "keywords": {
           "name": "keywords",
           "type": "json",
@@ -87,6 +94,13 @@
         },
         "linking": {
           "name": "linking",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "roadmap": {
+          "name": "roadmap",
           "type": "json",
           "primaryKey": false,
           "notNull": false,
@@ -246,6 +260,93 @@
       "compositePrimaryKeys": {
         "checklist_progress_id": {
           "name": "checklist_progress_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "reports": {
+      "name": "reports",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "auditId": {
+          "name": "auditId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "userId": {
+          "name": "userId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clientName": {
+          "name": "clientName",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "reports_auditId_audits_id_fk": {
+          "name": "reports_auditId_audits_id_fk",
+          "tableFrom": "reports",
+          "tableTo": "audits",
+          "columnsFrom": [
+            "auditId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "reports_userId_users_id_fk": {
+          "name": "reports_userId_users_id_fk",
+          "tableFrom": "reports",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "reports_id": {
+          "name": "reports_id",
           "columns": [
             "id"
           ]
