@@ -73,3 +73,13 @@
 - [x] Responsive design
 - [x] Dark theme with professional SEO tool aesthetic
 - [x] Vitest tests for audit router
+
+## Bug Fixes & Improvements (v2)
+- [x] Fix AI engine: remove prefill trick, use proper system prompts and robust JSON extraction
+- [x] Fix CSS @import order (Google Fonts moved to index.html link tag)
+- [x] History tab: show Failed badge for failed audits, hide View button for failed
+- [x] History tab: filter out pending/running audits
+- [x] Re-run button pre-fills URL and industry via query params
+- [x] Recent audits panel shows global audits for guests
+- [x] Add Linking tab (8th tab) with topical clusters and immediate link opportunities
+- [x] Loading overlay: real progress bar with step counter and percentage

@@ -37,7 +37,7 @@ export interface MetadataPage {
   optimizedDesc: string;
   titleChars: number;
   descChars: number;
-  issue: string;
+  issue: "No keyword" | "Too long" | "Too short" | "Missing" | "Generic" | string;
 }
 
 export interface Metadata {

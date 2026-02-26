@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -15,24 +15,37 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Zap, BarChart3, Clock, ChevronRight, LogIn } from "lucide-react";
+import { Search, Zap, BarChart3, Clock, ChevronRight, LogIn, FileText, Target, Calendar } from "lucide-react";
 
 const STAGE_MESSAGES = [
   "📊 Scoring 8 SEO dimensions...",
   "🔍 Mapping keyword opportunities...",
-  "✏️ Rewriting metadata & schema...",
-  "📅 Building content calendar...",
-  "✅ Building action checklist...",
+  "✏️ Rewriting metadata & schema markup...",
+  "📅 Building 90-day content calendar...",
+  "✅ Creating prioritized action checklist...",
 ];
 
 export default function Home() {
   const [, navigate] = useLocation();
+  const search = useSearch();
   const { user, isAuthenticated } = useAuth();
-  const [url, setUrl] = useState("");
-  const [industry, setIndustry] = useState("");
+
+  // Support pre-fill from re-run navigation
+  const searchParams = new URLSearchParams(search);
+  const prefillUrl = searchParams.get("url") ?? "";
+  const prefillIndustry = searchParams.get("industry") ?? "";
+
+  const [url, setUrl] = useState(prefillUrl);
+  const [industry, setIndustry] = useState(prefillIndustry);
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState(0);
   const urlInputRef = useRef<HTMLInputElement>(null);
+
+  // Update state if prefill changes (e.g., from re-run)
+  useEffect(() => {
+    if (prefillUrl) setUrl(prefillUrl);
+    if (prefillIndustry) setIndustry(prefillIndustry);
+  }, [prefillUrl, prefillIndustry]);
 
   const recentAudits = trpc.audit.recent.useQuery(undefined, {
     refetchOnWindowFocus: false,
@@ -56,12 +69,12 @@ export default function Home() {
     const interval = setInterval(() => {
       i = Math.min(i + 1, STAGE_MESSAGES.length - 1);
       setStage(i);
-    }, 4000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [loading]);
 
   const handleAudit = () => {
-    if (!url.trim()) return;
+    if (!url.trim()) { toast.error("Please enter a URL"); return; }
     if (!industry) { toast.error("Please select an industry"); return; }
     let normalizedUrl = url.trim();
     if (!normalizedUrl.startsWith("http")) normalizedUrl = "https://" + normalizedUrl;
@@ -81,10 +94,11 @@ export default function Home() {
 
   // Loading overlay
   if (loading) {
+    const progressPct = ((stage + 1) / STAGE_MESSAGES.length) * 100;
     return (
       <div className="fixed inset-0 bg-background flex flex-col items-center justify-center z-50">
         <div className="flex flex-col items-center gap-8 max-w-md w-full px-6">
-          {/* Spinner */}
+          {/* Animated spinner with icon */}
           <div className="relative">
             <div className="w-20 h-20 spin-border" />
             <div className="absolute inset-0 flex items-center justify-center">
@@ -94,33 +108,42 @@ export default function Home() {
 
           {/* Stage text */}
           <div className="text-center">
-            <p className="text-lg font-semibold text-foreground mb-2">
+            <p className="text-lg font-semibold text-foreground mb-2 transition-all">
               {STAGE_MESSAGES[stage]}
             </p>
             <p className="text-sm text-muted-foreground">
-              Analyzing <span className="text-blue-400 font-medium">{url}</span>
+              Analyzing{" "}
+              <span className="text-blue-400 font-medium break-all">
+                {url.replace(/^https?:\/\//, "")}
+              </span>
             </p>
           </div>
 
-          {/* Progress dots */}
-          <div className="flex gap-2">
-            {STAGE_MESSAGES.map((_, i) => (
+          {/* Real progress bar */}
+          <div className="w-full">
+            <div className="flex justify-between text-xs text-muted-foreground mb-2">
+              <span>Step {stage + 1} of {STAGE_MESSAGES.length}</span>
+              <span>{Math.round(progressPct)}%</span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-out"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Shimmer skeleton cards */}
+          <div className="w-full grid grid-cols-2 gap-3">
+            {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className={`w-2 h-2 rounded-full transition-all duration-500 ${
-                  i <= stage ? "bg-blue-500" : "bg-muted"
-                }`}
+                className="h-16 rounded-lg shimmer"
+                style={{ animationDelay: `${i * 0.15}s` }}
               />
             ))}
           </div>
-
-          {/* Skeleton cards */}
-          <div className="w-full grid grid-cols-2 gap-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-16 rounded-lg shimmer" />
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground">Usually takes 15–25 seconds</p>
+          <p className="text-xs text-muted-foreground">Usually takes 20–40 seconds</p>
         </div>
       </div>
     );
@@ -136,16 +159,19 @@ export default function Home() {
               <Zap className="w-4 h-4 text-white" />
             </div>
             <span className="font-bold text-lg text-foreground">RankIQ</span>
-            <Badge variant="secondary" className="text-xs">AI-Powered</Badge>
+            <Badge variant="secondary" className="text-xs hidden sm:inline-flex">AI-Powered SEO</Badge>
           </div>
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
               <span className="text-sm text-muted-foreground">
-                Welcome, {user?.name?.split(" ")[0] ?? "User"}
+                Welcome, <span className="text-foreground font-medium">{user?.name?.split(" ")[0] ?? "User"}</span>
               </span>
             ) : (
-              <a href={getLoginUrl()} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <LogIn className="w-4 h-4" />
+              <a
+                href={getLoginUrl()}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-1.5 hover:border-blue-500/50"
+              >
+                <LogIn className="w-3.5 h-3.5" />
                 Sign in to save audits
               </a>
             )}
@@ -154,28 +180,28 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <main className="container py-16 md:py-24">
-        <div className="max-w-3xl mx-auto text-center mb-12">
+      <main className="container py-12 md:py-20">
+        <div className="max-w-3xl mx-auto text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-full px-4 py-1.5 text-sm text-blue-400 mb-6">
             <Zap className="w-3.5 h-3.5" />
-            Powered by Claude AI · No API keys required
+            5 AI calls · No API keys required
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4 leading-tight">
-            SEO Audit in{" "}
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
+            Strategic SEO Audit in{" "}
             <span className="text-blue-400">Under 60 Seconds</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Enter any URL and get a complete strategic SEO audit — health score, keyword opportunities, metadata rewrites, schema markup, and a 90-day content plan.
+            Enter any URL and get a complete AI-powered SEO audit — health score, keyword opportunities, metadata rewrites, schema markup, content calendar, and a prioritized action checklist.
           </p>
         </div>
 
         {/* Input card */}
         <div className="max-w-2xl mx-auto">
-          <div className="bg-card border border-border rounded-xl p-6 shadow-xl">
+          <div className="bg-card border border-border rounded-xl p-6 shadow-xl shadow-black/20">
             <div className="flex flex-col gap-4">
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                   <Input
                     ref={urlInputRef}
                     type="url"
@@ -183,12 +209,13 @@ export default function Home() {
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="pl-10 h-12 bg-background border-border text-foreground placeholder:text-muted-foreground"
+                    className="pl-10 h-12 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-blue-500/50"
+                    autoFocus
                   />
                 </div>
                 <Select value={industry} onValueChange={setIndustry}>
-                  <SelectTrigger className="w-48 h-12 bg-background border-border text-foreground">
-                    <SelectValue placeholder="Industry" />
+                  <SelectTrigger className="sm:w-48 h-12 bg-background border-border text-foreground">
+                    <SelectValue placeholder="Select industry" />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
                     {INDUSTRIES.map((ind) => (
@@ -202,7 +229,7 @@ export default function Home() {
               <Button
                 onClick={handleAudit}
                 disabled={!url.trim() || !industry}
-                className="h-12 text-base font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40"
+                className="h-12 text-base font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all"
               >
                 <Zap className="w-4 h-4 mr-2" />
                 Run SEO Audit
@@ -210,16 +237,17 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-4 mt-6">
+          {/* Feature pills */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
             {[
               { icon: BarChart3, label: "8 SEO Dimensions", sub: "Scored 0–100" },
-              { icon: Search, label: "6 Keywords", sub: "With volume & intent" },
-              { icon: Clock, label: "15–25 Seconds", sub: "Full audit time" },
+              { icon: Target, label: "6 Keywords", sub: "Volume & intent" },
+              { icon: FileText, label: "Metadata Rewrites", sub: "4 pages optimized" },
+              { icon: Calendar, label: "90-Day Calendar", sub: "5 content items" },
             ].map(({ icon: Icon, label, sub }) => (
-              <div key={label} className="bg-card border border-border rounded-lg p-4 text-center">
-                <Icon className="w-5 h-5 text-blue-400 mx-auto mb-2" />
-                <p className="text-sm font-semibold text-foreground">{label}</p>
+              <div key={label} className="bg-card border border-border rounded-lg p-3 text-center">
+                <Icon className="w-4 h-4 text-blue-400 mx-auto mb-1.5" />
+                <p className="text-xs font-semibold text-foreground">{label}</p>
                 <p className="text-xs text-muted-foreground">{sub}</p>
               </div>
             ))}
@@ -229,33 +257,74 @@ export default function Home() {
         {/* Recent audits */}
         {recentAudits.data && recentAudits.data.length > 0 && (
           <div className="max-w-2xl mx-auto mt-10">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Recent Audits
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              {isAuthenticated ? "Your Recent Audits" : "Recent Audits"}
             </h2>
             <div className="flex flex-col gap-2">
               {recentAudits.data.map((audit) => {
                 const score = audit.overallScore;
-                const color = score >= 70 ? "text-green-400" : score >= 45 ? "text-amber-400" : "text-red-400";
+                const color =
+                  score >= 70 ? "text-green-400" : score >= 45 ? "text-amber-400" : "text-red-400";
+                const bgColor =
+                  score >= 70
+                    ? "bg-green-500/10 border-green-500/20"
+                    : score >= 45
+                    ? "bg-amber-500/10 border-amber-500/20"
+                    : "bg-red-500/10 border-red-500/20";
                 return (
                   <button
                     key={audit.id}
                     onClick={() => prefillAudit(audit.url, audit.industry)}
-                    className="flex items-center gap-4 bg-card border border-border rounded-lg px-4 py-3 hover:border-blue-500/50 hover:bg-accent/50 transition-all text-left group"
+                    className="flex items-center gap-4 bg-card border border-border rounded-lg px-4 py-3 hover:border-blue-500/50 hover:bg-accent/30 transition-all text-left group"
                   >
-                    <div className={`text-2xl font-bold tabular-nums ${color} w-12 shrink-0`}>
-                      {score}
+                    <div className={`w-10 h-10 rounded-lg ${bgColor} border flex items-center justify-center shrink-0`}>
+                      <span className={`text-sm font-bold tabular-nums ${color}`}>{score}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{audit.url}</p>
-                      <p className="text-xs text-muted-foreground">{audit.industry}</p>
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {audit.url.replace(/^https?:\/\//, "")}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {audit.industry} · {new Date(audit.createdAt).toLocaleDateString()}
+                      </p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-muted-foreground hidden sm:block group-hover:text-blue-400 transition-colors">
+                        Click to re-audit
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-blue-400 transition-colors" />
+                    </div>
                   </button>
                 );
               })}
             </div>
           </div>
         )}
+
+        {/* What you get section */}
+        <div className="max-w-2xl mx-auto mt-14">
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-5 text-center">
+            What's included in every audit
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              { title: "SEO Health Score", desc: "Overall score + 8 dimension breakdown with radar chart" },
+              { title: "Keyword Opportunities", desc: "6 keywords with volume, difficulty, intent & content type" },
+              { title: "Metadata Rewrites", desc: "Current vs optimized titles & descriptions for 4 pages" },
+              { title: "Schema Markup", desc: "JSON-LD code ready to copy for 2+ schema types" },
+              { title: "90-Day Content Plan", desc: "5 content items with keywords, word counts & clusters" },
+              { title: "Action Checklist", desc: "12 prioritized tasks grouped by phase — exportable as CSV" },
+            ].map(({ title, desc }) => (
+              <div key={title} className="flex items-start gap-3 bg-card/50 border border-border/50 rounded-lg p-4">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-2 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </main>
     </div>
   );

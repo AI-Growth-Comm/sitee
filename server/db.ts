@@ -137,21 +137,29 @@ export async function listAuditsForUser(userId: number, limit = 20) {
 export async function listRecentAudits(userId: number | null, limit = 3) {
   const db = await getDb();
   if (!db) return [];
+  const selectFields = {
+    id: audits.id,
+    url: audits.url,
+    industry: audits.industry,
+    overallScore: audits.overallScore,
+    createdAt: audits.createdAt,
+  };
   if (userId) {
+    // Logged-in: show their own recent audits
     return db
-      .select({
-        id: audits.id,
-        url: audits.url,
-        industry: audits.industry,
-        overallScore: audits.overallScore,
-        createdAt: audits.createdAt,
-      })
+      .select(selectFields)
       .from(audits)
       .where(and(eq(audits.userId, userId), eq(audits.status, "complete")))
       .orderBy(desc(audits.createdAt))
       .limit(limit);
   }
-  return [];
+  // Guest: show the most recent completed audits globally
+  return db
+    .select(selectFields)
+    .from(audits)
+    .where(eq(audits.status, "complete"))
+    .orderBy(desc(audits.createdAt))
+    .limit(limit);
 }
 
 // ─── Checklist progress helpers ───────────────────────────────────────────────
