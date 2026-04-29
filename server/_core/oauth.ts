@@ -44,7 +44,38 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // Redirect to user hub after sign-in
+      // Check for a pending audit claim (guest token stored in cookie)
+      const guestToken = req.cookies?.sitee_guest_token;
+      if (guestToken) {
+        try {
+          const user = await db.getUserByOpenId(userInfo.openId);
+          if (user) {
+            // Find the most recent unclaimed audit with this guest token
+            const { getDb } = await import("../db");
+            const { audits } = await import("../../drizzle/schema");
+            const { eq, and, isNull } = await import("drizzle-orm");
+            const dbConn = await getDb();
+            if (dbConn) {
+              const pending = await dbConn.select({ id: audits.id })
+                .from(audits)
+                .where(and(eq(audits.guestToken, guestToken), isNull(audits.userId)))
+                .limit(1);
+              if (pending.length > 0) {
+                await db.claimAudit(pending[0].id, user.id);
+                // Clear the guest token cookie
+                res.clearCookie("sitee_guest_token");
+                // Redirect to the claimed audit's full results
+                res.redirect(302, `/audit/${pending[0].id}`);
+                return;
+              }
+            }
+          }
+        } catch (claimErr) {
+          console.warn("[OAuth] Failed to claim guest audit:", claimErr);
+        }
+      }
+
+      // Default: redirect to user hub
       res.redirect(302, "/hub");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);

@@ -789,16 +789,20 @@ export default function AuditDashboard() {
     );
   }
 
+  // If this is a teaser response (guest user), redirect to teaser page
+  if (auditQuery.data.isTeaser) {
+    navigate(`/audit/${auditId}/teaser`, { replace: true });
+    return null;
+  }
   const { audit, checklistDoneMap: serverDoneMap } = auditQuery.data;
   const mergedDoneMap = { ...serverDoneMap, ...localDoneMap };
-
   const overview = audit.overview as Overview | null;
   const keywords = audit.keywords as Keywords | null;
   const metadata = audit.metadata as Metadata | null;
   const schemaData = audit.schemaData as SchemaData | null;
   const calendar = audit.calendar as ContentCalendar | null;
   const checklist = audit.checklist as Checklist | null;
-  const linking = audit.linking as InternalLinking | null;
+  const linking = audit.linking as InternalLinking | null;;
 
   // Determine which tabs have data
   const tabHasData: Record<Tab, boolean> = {

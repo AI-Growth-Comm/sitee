@@ -143,3 +143,16 @@
 - [x] Sign out redirects to /
 - [x] Add Sign In link (LogIn icon) to Home.tsx nav for guests
 - [x] Show user first name + hub link in Home.tsx nav when signed in
+
+## Guest Teaser Conversion Flow (v6)
+- [x] Add claimed and guestToken columns to drizzle/schema.ts
+- [x] Apply DB columns (confirmed present via direct SQL)
+- [x] Update audit.run to generate guestToken cookie for guests and save to DB
+- [x] Update audit.get to return isTeaser:true with partial data for guests
+- [x] Add audit.claim publicProcedure (sets userId + claimed=true)
+- [x] Build AuditTeaser.tsx at /audit/:id/teaser (score ring, 2 dims, 2 keywords, blurred sections, sign-in wall)
+- [x] Update OAuth callback to auto-claim guest audit and redirect to /audit/:id
+- [x] Update Home.tsx to route guests to /teaser, signed-in users to /audit/:id
+- [x] Add /audit/:id/teaser route to App.tsx (before /audit/:id)
+- [x] Fix AuditDashboard.tsx and ReportViewer.tsx to handle isTeaser union type
+- [x] All 15 tests passing

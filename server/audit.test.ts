@@ -64,7 +64,7 @@ function createGuestContext(): TrpcContext {
   return {
     user: null,
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
-    res: { clearCookie: vi.fn() } as unknown as TrpcContext["res"],
+    res: { clearCookie: vi.fn(), cookie: vi.fn() } as unknown as TrpcContext["res"],
   };
 }
 
@@ -115,10 +115,11 @@ describe("audit.run", () => {
 });
 
 describe("audit.get", () => {
-  it("returns an audit by id", async () => {
+  it("returns teaser data for guest", async () => {
     const ctx = createGuestContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.audit.get({ id: 1 });
+    expect(result.isTeaser).toBe(true);
     expect(result.audit.id).toBe(1);
     expect(result.audit.url).toBe("https://example.com");
     expect(result.audit.overallScore).toBe(72);

@@ -60,6 +60,7 @@ export async function createAudit(data: {
   url: string;
   industry: string;
   customIndustry?: string | null;
+  guestToken?: string | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -68,10 +69,20 @@ export async function createAudit(data: {
     url: data.url,
     industry: data.industry,
     customIndustry: data.customIndustry ?? null,
+    guestToken: data.guestToken ?? null,
     overallScore: 0,
     status: "pending",
   });
   return result[0].insertId as number;
+}
+
+export async function claimAudit(auditId: number, userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const audit = await getAuditById(auditId);
+  if (!audit || audit.userId !== null) return false;
+  await db.update(audits).set({ userId, claimed: true }).where(eq(audits.id, auditId));
+  return true;
 }
 
 export async function updateAuditStatus(

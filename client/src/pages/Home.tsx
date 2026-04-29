@@ -67,7 +67,12 @@ export default function Home() {
   const runAudit = trpc.audit.run.useMutation({
     onSuccess: (data) => {
       setLoading(false);
-      navigate(`/audit/${data.auditId}`);
+      // Guests go to teaser; signed-in users go directly to full results
+      if (isAuthenticated) {
+        navigate(`/audit/${data.auditId}`);
+      } else {
+        navigate(`/audit/${data.auditId}/teaser`);
+      }
     },
     onError: (err) => {
       setLoading(false);

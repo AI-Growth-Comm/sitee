@@ -951,7 +951,7 @@ export default function ReportViewer() {
     );
   }
 
-  if (error || !data) {
+   if (error || !data) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
@@ -962,7 +962,11 @@ export default function ReportViewer() {
       </div>
     );
   }
-
+  // Guests get teaser only — redirect them
+  if (data.isTeaser) {
+    navigate(`/audit/${auditId}/teaser`, { replace: true });
+    return null;
+  }
   const { audit, checklistDoneMap } = data;
   const overview = audit.overview as Overview | null;
   const contentAudit = audit.contentAudit as ContentAudit | null;

@@ -5,6 +5,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
+  claimAudit,
   createAudit,
   deleteReport,
   getAuditById,
@@ -49,11 +50,23 @@ export const appRouter = router({
           input.industry === "Other" && input.customIndustry?.trim()
             ? input.customIndustry.trim()
             : input.industry;
+        // Generate a guest token for unauthenticated users so they can claim later
+        const guestToken = userId === null
+          ? Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
+          : null;
+        if (guestToken) {
+          ctx.res.cookie("sitee_guest_token", guestToken, {
+            httpOnly: true,
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+          });
+        }
         const auditId = await createAudit({
           userId,
           url: input.url,
           industry: input.industry,
           customIndustry: input.customIndustry ?? null,
+          guestToken,
         });
         await updateAuditStatus(auditId, "running");
         try {
@@ -89,15 +102,49 @@ export const appRouter = router({
         const audit = await getAuditById(input.id);
         if (!audit) throw new TRPCError({ code: "NOT_FOUND", message: "Audit not found" });
 
+        // Guests get teaser data only (partial results)
+        if (!ctx.user) {
+          const overview = audit.overview as any;
+          const keywords = audit.keywords as any;
+          return {
+            isTeaser: true as const,
+            audit: {
+              id: audit.id,
+              url: audit.url,
+              industry: audit.industry,
+              customIndustry: audit.customIndustry,
+              overallScore: audit.overallScore,
+              status: audit.status,
+              createdAt: audit.createdAt,
+            },
+            teaserData: {
+              overallScore: audit.overallScore,
+              summary: overview?.summary ?? null,
+              dimensions: (overview?.dimensions ?? []).slice(0, 2),
+              keywords: (keywords?.opportunities ?? []).slice(0, 2),
+            },
+            checklistDoneMap: {} as Record<string, boolean>,
+          };
+        }
+
         let checklistDoneMap: Record<string, boolean> = {};
-        if (ctx.user && audit.checklist) {
+        if (audit.checklist) {
           const progress = await getChecklistProgress(input.id, ctx.user.id);
           for (const p of progress) {
             checklistDoneMap[p.itemId] = p.done;
           }
         }
 
-        return { audit, checklistDoneMap };
+        return { isTeaser: false as const, audit, checklistDoneMap };
+      }),
+
+    // Claim a guest audit after sign-in
+    claim: publicProcedure
+      .input(z.object({ auditId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Must be signed in to claim" });
+        const claimed = await claimAudit(input.auditId, ctx.user.id);
+        return { claimed };
       }),
 
     // List all audits for the current user (history)
