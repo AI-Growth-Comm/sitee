@@ -746,7 +746,7 @@ export default function AuditDashboard() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `sitee-checklist-${auditId}.csv`;
+      a.download = `rankiq-checklist-${auditId}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     } else {
@@ -825,10 +825,10 @@ export default function AuditDashboard() {
             <span className="hidden sm:block">New Audit</span>
           </button>
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-              <Zap className="w-3.5 h-3.5 text-primary-foreground" />
+            <div className="w-6 h-6 rounded bg-blue-600 flex items-center justify-center">
+              <Zap className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-bold text-foreground hidden sm:block">Sitee</span>
+            <span className="font-bold text-foreground hidden sm:block">RankIQ</span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm text-muted-foreground truncate">
