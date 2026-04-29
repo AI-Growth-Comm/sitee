@@ -128,3 +128,18 @@
 - [x] Update AI engine: use customIndustry as the industry context in all 7 LLM calls
 - [x] Show custom business name in dashboard nav and report cover page
 - [x] Pre-fill business name on Re-run from history
+
+## Sitee v5 Updates
+- [x] Update index.css with full Sitee color variable set (primary, accent, success, warning, error, bg, surface, border, text, muted)
+- [x] Update <title> in index.html to "Sitee — Know your site. Grow your business."
+- [x] Replace remaining "RankIQ" strings with "Sitee" in client/src/
+- [x] Add hub.summary protectedProcedure to routers.ts (auditsUsed, auditsLimit, recentAudits×5, savedReports×5)
+- [x] Build UserHub.tsx at /hub (collapsible sidebar, 4 sections: Overview, Audit History, Reports, Profile)
+- [x] Add /hub route to App.tsx
+- [x] Rename "Linking" tab to "Internal Links" in AuditDashboard.tsx
+- [x] Add floating sticky "View Report" button bottom-right to AuditDashboard
+- [x] Tab bar overflow-x-auto on mobile in AuditDashboard
+- [x] OAuth callback redirect to /hub after sign-in
+- [x] Sign out redirects to /
+- [x] Add Sign In link (LogIn icon) to Home.tsx nav for guests
+- [x] Show user first name + hub link in Home.tsx nav when signed in

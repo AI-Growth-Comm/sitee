@@ -19,7 +19,7 @@ import type {
   ContentCalendar, Checklist, InternalLinking
 } from "../../../shared/auditTypes";
 
-const TABS = ["Overview", "Keywords", "Metadata", "Schema", "Calendar", "Checklist", "Linking", "History"] as const;
+const TABS = ["Overview", "Keywords", "Metadata", "Schema", "Calendar", "Checklist", "Internal Links", "History"] as const;
 type Tab = typeof TABS[number];
 
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
@@ -746,7 +746,7 @@ export default function AuditDashboard() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `rankiq-checklist-${auditId}.csv`;
+      a.download = `sitee-checklist-${auditId}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     } else {
@@ -808,7 +808,7 @@ export default function AuditDashboard() {
     Schema: !!schemaData,
     Calendar: !!calendar,
     Checklist: !!checklist,
-    Linking: !!linking,
+    "Internal Links": !!linking,
     History: true,
   };
 
@@ -828,7 +828,7 @@ export default function AuditDashboard() {
             <div className="w-6 h-6 rounded bg-blue-600 flex items-center justify-center">
               <Zap className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-bold text-foreground hidden sm:block">RankIQ</span>
+            <span className="font-bold text-foreground hidden sm:block">Sitee</span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm text-muted-foreground truncate">
@@ -885,7 +885,7 @@ export default function AuditDashboard() {
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 relative ${
                   activeTab === tab
-                    ? "border-blue-500 text-blue-400"
+                    ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -915,7 +915,7 @@ export default function AuditDashboard() {
             onExportCsv={handleExportCsv}
           />
         )}
-        {activeTab === "Linking" && linking && <LinkingTab linking={linking} />}
+        {activeTab === "Internal Links" && linking && <LinkingTab linking={linking} />}
         {activeTab === "History" && <HistoryTab onRerun={(url, ind, ci) => handleRerun(url, ind, ci)} />}
 
         {/* Fallback for missing data */}
@@ -929,6 +929,16 @@ export default function AuditDashboard() {
           </div>
         )}
       </main>
+
+      {/* Floating "View Report" sticky button */}
+      <button
+        onClick={() => navigate(`/audit/${auditId}/report`)}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-full shadow-lg hover:bg-primary/90 transition-all text-sm font-medium print:hidden"
+        title="View full report"
+      >
+        <FileText className="w-4 h-4" />
+        <span className="hidden sm:inline">View Report</span>
+      </button>
     </div>
   );
 }

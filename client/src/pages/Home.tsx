@@ -178,10 +178,10 @@ export default function Home() {
       <header className="border-b border-border/50 px-6 py-4">
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <Zap className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-bold text-lg text-foreground">RankIQ</span>
+            <span className="font-bold text-lg text-foreground">Sitee</span>
             <Badge variant="secondary" className="text-xs hidden sm:inline-flex">AI-Powered SEO</Badge>
           </div>
           <div className="flex items-center gap-2">
@@ -195,28 +195,34 @@ export default function Home() {
             >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
-            {isAuthenticated && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/reports")}
-                className="gap-1.5 text-muted-foreground hover:text-foreground"
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Saved Reports</span>
-              </Button>
-            )}
             {isAuthenticated ? (
-              <span className="text-sm text-muted-foreground hidden sm:block">
-                <span className="text-foreground font-medium">{user?.name?.split(" ")[0] ?? "User"}</span>
-              </span>
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/reports")}
+                  className="gap-1.5 text-muted-foreground hover:text-foreground hidden md:flex"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Saved Reports</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/hub")}
+                  className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
+                >
+                  <span className="font-medium">{user?.name?.split(" ")[0] ?? "My Hub"}</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Button>
+              </>
             ) : (
               <a
                 href={getLoginUrl()}
-                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-1.5 hover:border-blue-500/50"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-1.5 hover:border-primary/50"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Sign in to save</span>
+                <span>Sign In</span>
               </a>
             )}
           </div>

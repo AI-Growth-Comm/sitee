@@ -220,6 +220,24 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  // ─── Hub (user dashboard) ─────────────────────────────────────────────────────
+  hub: router({
+    summary: protectedProcedure.query(async ({ ctx }) => {
+      const [recentAudits, savedReports] = await Promise.all([
+        listAuditsForUser(ctx.user.id, 5),
+        listReportsForUser(ctx.user.id, 5),
+      ]);
+      const allAudits = await listAuditsForUser(ctx.user.id, 1000);
+      return {
+        auditsUsed: allAudits.length,
+        auditsLimit: 50,
+        recentAudits,
+        savedReports,
+        user: ctx.user,
+      };
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
