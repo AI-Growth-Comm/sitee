@@ -120,8 +120,11 @@ export const appRouter = router({
             teaserData: {
               overallScore: audit.overallScore,
               summary: overview?.summary ?? null,
-              dimensions: (overview?.dimensions ?? []).slice(0, 2),
-              keywords: (keywords?.opportunities ?? []).slice(0, 2),
+              keyInsight: overview?.keyInsight ?? null,
+              seoMaturity: overview?.seoMaturity ?? null,
+              dimensions: (overview?.dimensions ?? []).slice(0, 4),
+              keywords: (keywords?.opportunities ?? []).slice(0, 4),
+              keywordStrategy: (keywords as any)?.strategy ?? null,
             },
             checklistDoneMap: {} as Record<string, boolean>,
           };

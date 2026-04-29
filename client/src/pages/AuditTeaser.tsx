@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowLeft, CheckCircle, Lock, Zap, Loader2, AlertCircle,
+  ArrowLeft, CheckCircle, Lock, Zap, Loader2, AlertCircle, TrendingUp, Key,
 } from "lucide-react";
 
-// ─── Score Arc (inline, no external dep) ──────────────────────────────────────
+// ─── Score Arc ────────────────────────────────────────────────────────────────
 function ScoreArc({ score, size = 160 }: { score: number; size?: number }) {
   const r = 44;
   const cx = 60;
@@ -38,7 +38,6 @@ function ScoreArc({ score, size = 160 }: { score: number; size?: number }) {
 function BlurredSection({ label, rows = 3 }: { label: string; rows?: number }) {
   return (
     <div className="relative rounded-xl border border-border bg-card overflow-hidden">
-      {/* Blurred content */}
       <div className="blur-sm pointer-events-none select-none p-4 space-y-2">
         <div className="h-4 bg-muted rounded w-1/3 mb-3" />
         {Array.from({ length: rows }).map((_, i) => (
@@ -49,7 +48,6 @@ function BlurredSection({ label, rows = 3 }: { label: string; rows?: number }) {
           </div>
         ))}
       </div>
-      {/* Lock overlay */}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/60 backdrop-blur-[2px]">
         <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
           <Lock className="w-5 h-5 text-primary" />
@@ -61,8 +59,8 @@ function BlurredSection({ label, rows = 3 }: { label: string; rows?: number }) {
 }
 
 const UNLOCK_FEATURES = [
-  "8-dimension SEO breakdown",
-  "6 keyword opportunities with intent & difficulty",
+  "Full 8-dimension SEO breakdown",
+  "All keyword opportunities with intent & difficulty",
   "Metadata rewrites for all key pages",
   "Schema markup recommendations",
   "90-day content plan",
@@ -80,15 +78,19 @@ export default function AuditTeaser() {
     { enabled: !!auditId, retry: false }
   );
 
-  // Build the OAuth URL with returnTo so we can redirect back after sign-in
   const [loginUrl] = useState(() => {
-    const base = getLoginUrl();
-    // Store returnTo in sessionStorage so OAuth callback can read it
     if (typeof window !== "undefined") {
       sessionStorage.setItem("sitee_return_to", `/audit/${auditId}`);
     }
-    return base;
+    return getLoginUrl();
   });
+
+  // If user is now signed in, redirect to full results
+  useEffect(() => {
+    if (data && !data.isTeaser) {
+      navigate(`/audit/${auditId}`, { replace: true });
+    }
+  }, [data, auditId, navigate]);
 
   if (isLoading) {
     return (
@@ -113,21 +115,20 @@ export default function AuditTeaser() {
     );
   }
 
-  // If user is now signed in (full data), redirect to full results
-  if (!data.isTeaser) {
-    navigate(`/audit/${auditId}`, { replace: true });
-    return null;
-  }
+  if (!data.isTeaser) return null;
 
   const { teaserData, audit } = data;
-  const { overallScore, summary, dimensions, keywords } = teaserData;
+  const { overallScore, summary, keyInsight, seoMaturity, dimensions, keywords, keywordStrategy } = teaserData;
   const scoreLabel = overallScore >= 70 ? "Strong Foundation" : overallScore >= 45 ? "Needs Improvement" : "Needs Attention";
   const scoreColor = overallScore >= 70 ? "text-emerald-400" : overallScore >= 45 ? "text-amber-400" : "text-red-400";
+  const maturityColor = seoMaturity === "High" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+    : seoMaturity === "Medium" ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+    : "bg-red-500/15 text-red-400 border-red-500/30";
 
   return (
     <div className="min-h-screen bg-background">
       {/* Top nav */}
-      <header className="border-b border-border/50 px-6 py-3 flex items-center gap-3">
+      <header className="border-b border-border/50 px-6 py-3 flex items-center gap-3 sticky top-0 z-20 bg-background/95 backdrop-blur">
         <button
           onClick={() => navigate("/")}
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -146,63 +147,102 @@ export default function AuditTeaser() {
             {audit.url.replace(/^https?:\/\//, "")}
           </p>
         </div>
+        <a
+          href={loginUrl}
+          className="shrink-0 inline-flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          <Zap className="w-3 h-3" /> Unlock Free
+        </a>
       </header>
 
       <main className="container py-8 max-w-4xl mx-auto space-y-6">
+
         {/* Score + summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="flex flex-col items-center justify-center bg-card border border-border rounded-xl p-6 gap-2">
+          <div className="flex flex-col items-center justify-center bg-card border border-border rounded-xl p-6 gap-3">
             <ScoreArc score={overallScore} size={160} />
             <p className={`text-sm font-semibold ${scoreColor}`}>{scoreLabel}</p>
+            {seoMaturity && (
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${maturityColor}`}>
+                {seoMaturity} Maturity
+              </span>
+            )}
           </div>
           <div className="md:col-span-2 bg-card border border-border rounded-xl p-6 flex flex-col justify-center gap-4">
             {summary && (
               <p className="text-foreground leading-relaxed text-sm">{summary}</p>
             )}
-            {/* 2 dimension bars */}
-            {dimensions.length > 0 && (
-              <div className="space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sample Dimensions</p>
-                {dimensions.map((dim: any) => {
-                  const barColor = dim.score >= 70 ? "#4ade80" : dim.score >= 45 ? "#fbbf24" : "#f87171";
-                  const textColor = dim.score >= 70 ? "text-emerald-400" : dim.score >= 45 ? "text-amber-400" : "text-red-400";
-                  return (
-                    <div key={dim.name}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium text-muted-foreground">{dim.name}</span>
-                        <span className={`text-sm font-bold tabular-nums ${textColor}`}>{dim.score}</span>
-                      </div>
-                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-700"
-                          style={{ width: `${dim.score}%`, backgroundColor: barColor }} />
-                      </div>
-                    </div>
-                  );
-                })}
+            {keyInsight && (
+              <div className="flex items-start gap-2 bg-primary/5 border border-primary/20 rounded-lg p-3">
+                <TrendingUp className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                <p className="text-sm text-foreground">{keyInsight}</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* 2 keyword rows (real) */}
+        {/* 4 dimension bars */}
+        {dimensions.length > 0 && (
+          <div className="bg-card border border-border rounded-xl p-5">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">SEO Dimension Scores</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {dimensions.map((dim: any) => {
+                const pct = typeof dim.score === "number" ? (dim.score > 10 ? dim.score : dim.score * 10) : 0;
+                const barColor = pct >= 70 ? "#4ade80" : pct >= 45 ? "#fbbf24" : "#f87171";
+                const textColor = pct >= 70 ? "text-emerald-400" : pct >= 45 ? "text-amber-400" : "text-red-400";
+                return (
+                  <div key={dim.name}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-medium text-foreground">{dim.name}</span>
+                      <span className={`text-sm font-bold tabular-nums ${textColor}`}>
+                        {dim.score > 10 ? dim.score : `${dim.score}/10`}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }} />
+                    </div>
+                    {dim.status && (
+                      <p className="text-xs text-muted-foreground mt-1">{dim.status}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 4 keyword rows */}
         {keywords.length > 0 && (
           <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-border">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sample Keywords</p>
+            <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+              <Key className="w-4 h-4 text-primary" />
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Keyword Opportunities</p>
             </div>
+            {keywordStrategy && (
+              <div className="px-4 py-3 border-b border-border/50 bg-muted/20">
+                <p className="text-xs text-muted-foreground">{keywordStrategy}</p>
+              </div>
+            )}
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/50 bg-muted/20">
                   <th className="text-left px-4 py-2 text-xs text-muted-foreground font-medium">Keyword</th>
-                  <th className="text-left px-4 py-2 text-xs text-muted-foreground font-medium">Volume</th>
+                  <th className="text-left px-4 py-2 text-xs text-muted-foreground font-medium hidden sm:table-cell">Volume</th>
+                  <th className="text-left px-4 py-2 text-xs text-muted-foreground font-medium hidden sm:table-cell">Intent</th>
                   <th className="text-left px-4 py-2 text-xs text-muted-foreground font-medium">Priority</th>
                 </tr>
               </thead>
               <tbody>
                 {keywords.map((kw: any, i: number) => (
-                  <tr key={i} className="border-b border-border/30">
+                  <tr key={i} className="border-b border-border/30 hover:bg-muted/10 transition-colors">
                     <td className="px-4 py-2.5 font-medium text-foreground">{kw.keyword}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground tabular-nums">{kw.volume}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground tabular-nums hidden sm:table-cell">{kw.volume?.toLocaleString() ?? "—"}</td>
+                    <td className="px-4 py-2.5 hidden sm:table-cell">
+                      {kw.intent && (
+                        <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">{kw.intent}</span>
+                      )}
+                    </td>
                     <td className="px-4 py-2.5">
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
                         kw.priority === "URGENT" ? "bg-red-500/15 text-red-400 border-red-500/30" :
@@ -217,30 +257,28 @@ export default function AuditTeaser() {
           </div>
         )}
 
-        {/* Blurred sections */}
+        {/* Blurred locked sections */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <BlurredSection label="Metadata Rewrites (locked)" rows={4} />
-          <BlurredSection label="Schema Markup (locked)" rows={4} />
-          <BlurredSection label="Content Calendar (locked)" rows={3} />
-          <BlurredSection label="Action Checklist (locked)" rows={5} />
+          <BlurredSection label="Metadata Rewrites (sign in to unlock)" rows={4} />
+          <BlurredSection label="Schema Markup (sign in to unlock)" rows={4} />
+          <BlurredSection label="90-Day Content Calendar (sign in to unlock)" rows={3} />
+          <BlurredSection label="Action Checklist (sign in to unlock)" rows={5} />
         </div>
 
         {/* Sign-in wall card */}
         <div className="rounded-2xl overflow-hidden shadow-xl border border-primary/20">
           <div className="bg-gradient-to-br from-[#0D9488] to-[#0F766E] p-8 md:p-10">
             <div className="max-w-2xl mx-auto text-center space-y-6">
-              {/* Headline */}
               <div>
                 <p className="text-white/80 text-sm font-medium mb-2 uppercase tracking-wider">Your full results are ready</p>
                 <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
-                  Your score is <span className="text-white font-extrabold">{overallScore}/100</span> — unlock everything free.
+                  Your score is <span className="font-extrabold">{overallScore}/100</span> — unlock everything free.
                 </h2>
                 <p className="text-white/80 mt-2 text-sm md:text-base">
-                  Create your free account to access the complete audit.
+                  Create your free account to access the complete audit in seconds.
                 </p>
               </div>
 
-              {/* Feature checklist */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left max-w-lg mx-auto">
                 {UNLOCK_FEATURES.map((feat) => (
                   <div key={feat} className="flex items-center gap-2">
@@ -250,7 +288,6 @@ export default function AuditTeaser() {
                 ))}
               </div>
 
-              {/* CTA */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <a
                   href={loginUrl}

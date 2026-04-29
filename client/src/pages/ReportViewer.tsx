@@ -992,15 +992,17 @@ export default function ReportViewer() {
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border print:hidden">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate(`/audit/${auditId}`)} className="gap-2 text-muted-foreground hover:text-foreground">
+            <Button variant="outline" size="sm" onClick={() => navigate(`/audit/${auditId}`)} className="gap-2 border-primary/30 text-primary hover:bg-primary/10">
               <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Back to Dashboard</span>
+              <span className="hidden sm:inline">Back to Results</span>
             </Button>
             <Separator orientation="vertical" className="h-5" />
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-primary" />
+              <div className="w-5 h-5 rounded bg-primary flex items-center justify-center shrink-0">
+                <FileText className="w-3 h-3 text-primary-foreground" />
+              </div>
               <span className="font-semibold text-sm text-foreground hidden sm:block">SEO Report</span>
-              <span className="text-xs text-muted-foreground hidden md:block">— {audit.url}</span>
+              <span className="text-xs text-muted-foreground hidden md:block truncate max-w-[200px]">— {audit.url.replace(/^https?:\/\//, "")}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -1019,7 +1021,13 @@ export default function ReportViewer() {
               <span className="hidden sm:inline">Print / PDF</span>
             </Button>
             {isAuthenticated && (
-              <SaveReportDialog auditId={auditId} auditUrl={audit.url} />
+              <>
+                <SaveReportDialog auditId={auditId} auditUrl={audit.url} />
+                <Button variant="ghost" size="sm" onClick={() => navigate("/hub")} className="gap-2 text-muted-foreground hover:text-foreground hidden md:flex">
+                  <BookOpen className="w-4 h-4" />
+                  <span className="hidden lg:inline">My Hub</span>
+                </Button>
+              </>
             )}
             <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate(`/audit/${auditId}`)}>
               <ExternalLink className="w-4 h-4" />

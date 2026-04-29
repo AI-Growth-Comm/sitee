@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -312,11 +312,14 @@ export default function UserHub() {
     onSuccess: () => navigate("/"),
   });
 
-  // Redirect guests to home
-  if (!loading && !isAuthenticated) {
-    navigate("/");
-    return null;
-  }
+  // Redirect guests to home — must be in useEffect to avoid setState-in-render
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate("/");
+    }
+  }, [loading, isAuthenticated, navigate]);
+
+  if (!loading && !isAuthenticated) return null;
 
   if (loading || summaryQuery.isLoading) {
     return (

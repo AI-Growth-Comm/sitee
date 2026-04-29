@@ -156,3 +156,11 @@
 - [x] Add /audit/:id/teaser route to App.tsx (before /audit/:id)
 - [x] Fix AuditDashboard.tsx and ReportViewer.tsx to handle isTeaser union type
 - [x] All 15 tests passing
+
+## UX Polish & Pricing (v7)
+- [x] Fix UserHub setState-in-render bug (navigate called during render)
+- [x] Expand AuditTeaser: show 4 dimensions, 4 keywords, full summary (more free content)
+- [x] Polish audit→report navigation: consistent teal branding, breadcrumb, back button
+- [x] Polish SavedReports / SavedReportViewer flow: consistent nav, back to hub
+- [x] Build Pricing.tsx at /pricing (3-tier: Free/Pro/Agency, feature comparison table)
+- [x] Link /pricing from Home nav and teaser sign-in wall

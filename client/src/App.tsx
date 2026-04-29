@@ -11,6 +11,7 @@ import SavedReports from "./pages/SavedReports";
 import SavedReportViewer from "./pages/SavedReportViewer";
 import UserHub from "./pages/UserHub";
 import AuditTeaser from "./pages/AuditTeaser";
+import Pricing from "./pages/Pricing";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/audit/:id/teaser" component={AuditTeaser} />
       <Route path="/audit/:id" component={AuditDashboard} />
       <Route path="/audit/:id/report" component={ReportViewer} />
+      <Route path="/pricing" component={Pricing} />
       <Route path="/reports" component={SavedReports} />
       <Route path="/report/:id" component={SavedReportViewer} />
       <Route path="/404" component={NotFound} />

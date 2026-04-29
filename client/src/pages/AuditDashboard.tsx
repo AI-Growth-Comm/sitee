@@ -34,8 +34,8 @@ function OverviewTab({ overview, linking }: { overview: Overview; linking: Inter
         </div>
         <div className="md:col-span-2 bg-card border border-border rounded-xl p-6 flex flex-col justify-center gap-4">
           <p className="text-foreground leading-relaxed">{overview.summary}</p>
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-            <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">💡 Key Insight</p>
+          <div className="bg-primary/8 border border-primary/20 rounded-lg p-4">
+            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">Key Insight</p>
             <p className="text-sm text-foreground">{overview.keyInsight}</p>
           </div>
         </div>
@@ -823,14 +823,14 @@ export default function AuditDashboard() {
         <div className="container flex items-center gap-3 h-14">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0 border border-border rounded-lg px-3 py-1.5 hover:border-blue-500/50"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0 border border-border rounded-lg px-3 py-1.5 hover:border-primary/40"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:block">New Audit</span>
           </button>
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-6 h-6 rounded bg-blue-600 flex items-center justify-center">
-              <Zap className="w-3.5 h-3.5 text-white" />
+            <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
+              <Zap className="w-3.5 h-3.5 text-primary-foreground" />
             </div>
             <span className="font-bold text-foreground hidden sm:block">Sitee</span>
           </div>
@@ -861,7 +861,7 @@ export default function AuditDashboard() {
               variant="outline"
               size="sm"
               onClick={() => navigate(`/audit/${auditId}/report`)}
-              className="gap-1.5 border-blue-500/30 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 hidden sm:flex"
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hidden sm:flex"
             >
               <FileText className="w-3.5 h-3.5" />
               Report
@@ -870,11 +870,11 @@ export default function AuditDashboard() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate("/reports")}
+                onClick={() => navigate("/hub")}
                 className="gap-1.5 text-muted-foreground hover:text-foreground hidden md:flex"
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                Saved
+                My Hub
               </Button>
             )}
           </div>

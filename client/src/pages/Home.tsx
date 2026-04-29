@@ -205,6 +205,14 @@ export default function Home() {
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => navigate("/pricing")}
+                  className="gap-1.5 text-muted-foreground hover:text-foreground hidden md:flex"
+                >
+                  <span>Pricing</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => navigate("/reports")}
                   className="gap-1.5 text-muted-foreground hover:text-foreground hidden md:flex"
                 >
@@ -222,13 +230,21 @@ export default function Home() {
                 </Button>
               </>
             ) : (
-              <a
-                href={getLoginUrl()}
-                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-1.5 hover:border-primary/50"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In</span>
-              </a>
+              <>
+                <button
+                  onClick={() => navigate("/pricing")}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block px-2 py-1"
+                >
+                  Pricing
+                </button>
+                <a
+                  href={getLoginUrl()}
+                  className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-1.5 hover:border-primary/50"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </a>
+              </>
             )}
           </div>
         </div>
