@@ -927,12 +927,13 @@ function SaveReportDialog({ auditId, auditUrl }: { auditId: number; auditUrl: st
 }
 
 // ─── Main Report Viewer Page ──────────────────────────────────────────────────
-export default function ReportViewer() {
+export default function ReportViewer({ embeddedId, onBack }: { embeddedId?: number; onBack?: () => void } = {}) {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const { isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const auditId = parseInt(params.id ?? "0", 10);
+  const embedded = embeddedId !== undefined;
+  const auditId = embeddedId ?? parseInt(params.id ?? "0", 10);
   const [activeSection, setActiveSection] = useState<"cover" | "module1" | "module2" | "module3" | "module4">("cover");
 
   const { data, isLoading, error } = trpc.audit.get.useQuery(
@@ -942,7 +943,7 @@ export default function ReportViewer() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex items-center justify-center py-20 bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 animate-spin text-primary" />
           <p className="text-muted-foreground">Loading report...</p>
@@ -951,13 +952,13 @@ export default function ReportViewer() {
     );
   }
 
-   if (error || !data) {
+  if (error || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex items-center justify-center py-20 bg-background">
         <div className="text-center space-y-4">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
           <p className="text-foreground font-semibold">Report not found</p>
-          <Button onClick={() => navigate("/")} variant="outline">Go Home</Button>
+          <Button onClick={() => embedded ? onBack?.() : navigate("/")} variant="outline">Back</Button>
         </div>
       </div>
     );
@@ -987,14 +988,14 @@ export default function ReportViewer() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={embedded ? "" : "min-h-screen bg-background"}>
       {/* Top Nav */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border print:hidden">
+      <div className={`${embedded ? "" : "sticky top-0 z-50"} bg-background/95 backdrop-blur border-b border-border print:hidden`}>
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => navigate(`/audit/${auditId}`)} className="gap-2 border-primary/30 text-primary hover:bg-primary/10">
+            <Button variant="outline" size="sm" onClick={() => embedded ? onBack?.() : navigate(`/audit/${auditId}`)} className="gap-2 border-primary/30 text-primary hover:bg-primary/10">
               <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Back to Results</span>
+              <span className="hidden sm:inline">{embedded ? "Back to Results" : "Back to Results"}</span>
             </Button>
             <Separator orientation="vertical" className="h-5" />
             <div className="flex items-center gap-2">

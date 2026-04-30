@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
+const AuditDashboard = lazy(() => import("./AuditDashboard"));
+const ReportViewer = lazy(() => import("./ReportViewer"));
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -47,6 +49,7 @@ function MiniScore({ score }: { score: number }) {
 
 // ─── Section types ────────────────────────────────────────────────────────────
 type Section = "overview" | "new-audit" | "history" | "reports" | "profile";
+type InlineView = { type: "audit" | "report"; auditId: number } | null;
 
 const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: "overview",   label: "Overview",      icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -126,7 +129,6 @@ function NewAuditPanel({ onAuditComplete }: { onAuditComplete: (auditId: number)
       setLoading(false);
       if (isAuthenticated) {
         onAuditComplete(data.auditId);
-        navigate(`/audit/${data.auditId}`);
       } else {
         navigate(`/audit/${data.auditId}/teaser`);
       }
@@ -481,6 +483,7 @@ export default function UserDashboard() {
   const { theme, toggleTheme } = useTheme();
   const [activeSection, setActiveSection] = useState<Section>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [inlineView, setInlineView] = useState<InlineView>(null);
 
   const summaryQuery = trpc.dashboard.summary.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -521,15 +524,20 @@ export default function UserDashboard() {
       }
     : null;
 
-  const handleNewAuditComplete = () => {
+  const handleNewAuditComplete = (auditId: number) => {
     summaryQuery.refetch();
+    setInlineView({ type: "audit", auditId });
   };
   const handleNavigate = (p: string) => {
     if (p.includes("section=new-audit")) {
       setActiveSection("new-audit");
-    } else {
-      navigate(p);
+      return;
     }
+    const reportMatch = p.match(/^\/audit\/(\d+)\/report$/);
+    if (reportMatch) { setInlineView({ type: "report", auditId: Number(reportMatch[1]) }); return; }
+    const auditMatch = p.match(/^\/audit\/(\d+)$/);
+    if (auditMatch) { setInlineView({ type: "audit", auditId: Number(auditMatch[1]) }); return; }
+    navigate(p);
   };
 
   return (
@@ -564,7 +572,7 @@ export default function UserDashboard() {
           {NAV_ITEMS.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveSection(item.id)}
+              onClick={() => { setInlineView(null); setActiveSection(item.id); }}
               title={!sidebarOpen ? item.label : undefined}
               className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
                 activeSection === item.id
@@ -605,7 +613,9 @@ export default function UserDashboard() {
         <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border h-14 flex items-center px-6 gap-3">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground capitalize">
-              {NAV_ITEMS.find((n) => n.id === activeSection)?.label}
+              {inlineView
+                ? inlineView.type === "audit" ? "Audit Results" : "SEO Report"
+                : NAV_ITEMS.find((n) => n.id === activeSection)?.label}
             </p>
           </div>
           {/* Quick new audit button in header */}
@@ -627,21 +637,38 @@ export default function UserDashboard() {
         </header>
 
         {/* Section content */}
-        <div className="p-6">
-          {!data ? (
-            <div className="flex items-center justify-center py-20">
-              <p className="text-muted-foreground text-sm">Failed to load dashboard data. Please refresh.</p>
-            </div>
-          ) : (
-            <>
-              {activeSection === "overview"  && <OverviewSection data={data} onNavigate={handleNavigate} />}
-              {activeSection === "new-audit" && <NewAuditPanel onAuditComplete={handleNewAuditComplete} />}
-              {activeSection === "history"   && <HistorySection audits={data.recentAudits} onNavigate={navigate} onNewAudit={() => setActiveSection("new-audit")} />}
-              {activeSection === "reports"   && <ReportsSection reports={data.savedReports} onNavigate={navigate} onNewAudit={() => setActiveSection("new-audit")} />}
-              {activeSection === "profile"   && <ProfileSection data={data} />}
-            </>
-          )}
-        </div>
+        {inlineView ? (
+          <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="w-8 h-8 spin-border" /></div>}>
+            {inlineView.type === "audit" ? (
+              <AuditDashboard
+                embeddedId={inlineView.auditId}
+                onBack={() => setInlineView(null)}
+                onViewReport={(id) => setInlineView({ type: "report", auditId: id })}
+              />
+            ) : (
+              <ReportViewer
+                embeddedId={inlineView.auditId}
+                onBack={() => setInlineView({ type: "audit", auditId: inlineView.auditId })}
+              />
+            )}
+          </Suspense>
+        ) : (
+          <div className="p-6">
+            {!data ? (
+              <div className="flex items-center justify-center py-20">
+                <p className="text-muted-foreground text-sm">Failed to load dashboard data. Please refresh.</p>
+              </div>
+            ) : (
+              <>
+                {activeSection === "overview"  && <OverviewSection data={data} onNavigate={handleNavigate} />}
+                {activeSection === "new-audit" && <NewAuditPanel onAuditComplete={handleNewAuditComplete} />}
+                {activeSection === "history"   && <HistorySection audits={data.recentAudits} onNavigate={handleNavigate} onNewAudit={() => setActiveSection("new-audit")} />}
+                {activeSection === "reports"   && <ReportsSection reports={data.savedReports} onNavigate={handleNavigate} onNewAudit={() => setActiveSection("new-audit")} />}
+                {activeSection === "profile"   && <ProfileSection data={data} />}
+              </>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );

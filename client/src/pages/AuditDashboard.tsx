@@ -704,14 +704,15 @@ function HistoryTab({ onRerun }: { onRerun: (url: string, industry: string, cust
 }
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
-export default function AuditDashboard() {
+export default function AuditDashboard({ embeddedId, onBack, onViewReport }: { embeddedId?: number; onBack?: () => void; onViewReport?: (id: number) => void } = {}) {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
+  const embedded = embeddedId !== undefined;
   const [activeTab, setActiveTab] = useState<Tab>("Overview");
   const { isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  const auditId = parseInt(params.id ?? "0", 10);
+  const auditId = embeddedId ?? parseInt(params.id ?? "0", 10);
 
   const auditQuery = trpc.audit.get.useQuery(
     { id: auditId },
@@ -764,7 +765,7 @@ export default function AuditDashboard() {
 
   if (auditQuery.isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className={`${embedded ? "" : "min-h-screen"} bg-background flex items-center justify-center py-20`}>
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 spin-border" />
           <p className="text-muted-foreground">Loading audit...</p>
@@ -775,14 +776,14 @@ export default function AuditDashboard() {
 
   if (auditQuery.error || !auditQuery.data) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className={`${embedded ? "" : "min-h-screen"} bg-background flex items-center justify-center py-20`}>
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto">
             <AlertCircle className="w-8 h-8 text-red-400" />
           </div>
           <p className="text-red-400 font-medium">{auditQuery.error?.message ?? "Audit not found"}</p>
-          <Button onClick={() => navigate("/")} variant="outline" className="border-border">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Home
+          <Button onClick={() => embedded ? onBack?.() : navigate("/")} variant="outline" className="border-border">
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back
           </Button>
         </div>
       </div>
@@ -817,9 +818,9 @@ export default function AuditDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={embedded ? "" : "min-h-screen bg-background"}>
       {/* Sticky top nav */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
+      <header className={`${embedded ? "hidden" : "sticky top-0 z-40"} bg-background/95 backdrop-blur border-b border-border`}>
         <div className="container flex items-center gap-3 h-14">
           <button
             onClick={() => navigate("/")}
@@ -903,8 +904,44 @@ export default function AuditDashboard() {
         </div>
       </header>
 
+      {/* Embedded header bar */}
+      {embedded && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border bg-card/50">
+          <div className="flex items-center gap-3 min-w-0">
+            <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5 text-muted-foreground hover:text-foreground shrink-0">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </Button>
+            <span className="text-sm text-muted-foreground truncate">{audit.url.replace(/^https?:\/\//, "")}</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs text-muted-foreground hidden sm:block">{(audit as any).customIndustry || audit.industry}</span>
+            <MiniScoreRing score={audit.overallScore} size={36} />
+            <Button variant="outline" size="sm" onClick={() => onViewReport?.(auditId)} className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10">
+              <FileText className="w-3.5 h-3.5" /> Report
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Tab bar (always visible, sticky only when standalone) */}
+      <div className={`${embedded ? "" : "hidden"} border-b border-border overflow-x-auto scrollbar-none`}>
+        <div className="flex gap-0 min-w-max px-4">
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 relative ${
+                activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Tab content */}
-      <main className="container py-6">
+      <main className={embedded ? "px-4 py-5" : "container py-6"}>
         {activeTab === "Overview" && overview && <OverviewTab overview={overview} linking={linking} />}
         {activeTab === "Keywords" && keywords && <KeywordsTab keywords={keywords} />}
         {activeTab === "Metadata" && metadata && <MetadataTab metadata={metadata} />}
@@ -934,15 +971,17 @@ export default function AuditDashboard() {
         )}
       </main>
 
-      {/* Floating "View Report" sticky button */}
-      <button
-        onClick={() => navigate(`/audit/${auditId}/report`)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-full shadow-lg hover:bg-primary/90 transition-all text-sm font-medium print:hidden"
-        title="View full report"
-      >
-        <FileText className="w-4 h-4" />
-        <span className="hidden sm:inline">View Report</span>
-      </button>
+      {/* Floating "View Report" sticky button — standalone only */}
+      {!embedded && (
+        <button
+          onClick={() => navigate(`/audit/${auditId}/report`)}
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-full shadow-lg hover:bg-primary/90 transition-all text-sm font-medium print:hidden"
+          title="View full report"
+        >
+          <FileText className="w-4 h-4" />
+          <span className="hidden sm:inline">View Report</span>
+        </button>
+      )}
     </div>
   );
 }
