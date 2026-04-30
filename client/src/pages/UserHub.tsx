@@ -552,10 +552,7 @@ export default function UserDashboard() {
         <div className={`flex items-center h-14 border-b border-border px-3 gap-2 ${sidebarOpen ? "justify-between" : "justify-center"}`}>
           {sidebarOpen && (
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-6 h-6 rounded bg-primary flex items-center justify-center shrink-0">
-                <Zap className="w-3.5 h-3.5 text-primary-foreground" />
-              </div>
-              <span className="font-bold text-foreground text-sm">Sitee</span>
+              <img src="/manus-storage/sitee-logo_7a495881.png" alt="Sitee" className="h-6 w-auto" />
             </div>
           )}
           <button

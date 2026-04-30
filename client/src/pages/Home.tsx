@@ -206,10 +206,7 @@ export default function Home() {
       <header className="border-b border-border/50 px-6 py-4">
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Zap className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg text-foreground">Sitee</span>
+            <img src="/manus-storage/sitee-logo_7a495881.png" alt="Sitee" className="h-8 w-auto" />
             <Badge variant="secondary" className="text-xs hidden sm:inline-flex">AI-Powered SEO</Badge>
           </div>
           <div className="flex items-center gap-2">
@@ -696,11 +693,8 @@ export default function Home() {
       <footer className="border-t border-border bg-card/30">
         <div className="container py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded bg-primary flex items-center justify-center">
-              <Zap className="w-3 h-3 text-primary-foreground" />
-            </div>
-            <span className="font-semibold text-foreground">Sitee</span>
-            <span>· AI-Powered SEO Audits</span>
+            <img src="/manus-storage/sitee-logo_7a495881.png" alt="Sitee" className="h-6 w-auto" />
+            <span className="text-xs text-muted-foreground">· AI-Powered SEO Audits</span>
           </div>
           <div className="flex items-center gap-4">
             <button onClick={() => navigate("/pricing")} className="hover:text-foreground transition-colors">Pricing</button>

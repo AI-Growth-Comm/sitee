@@ -20,8 +20,8 @@ function Router() {
       <Route path="/hub" component={UserDashboard} />
       <Route path="/dashboard" component={UserDashboard} />
       <Route path="/audit/:id/teaser" component={AuditTeaser} />
-      <Route path="/audit/:id" component={AuditDashboard} />
-      <Route path="/audit/:id/report" component={ReportViewer} />
+      <Route path="/audit/:id">{() => <AuditDashboard />}</Route>
+      <Route path="/audit/:id/report">{() => <ReportViewer />}</Route>
       <Route path="/pricing" component={Pricing} />
       <Route path="/reports" component={SavedReports} />
       <Route path="/report/:id" component={SavedReportViewer} />
