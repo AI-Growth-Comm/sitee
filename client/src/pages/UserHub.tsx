@@ -524,6 +524,13 @@ export default function UserDashboard() {
   const handleNewAuditComplete = () => {
     summaryQuery.refetch();
   };
+  const handleNavigate = (p: string) => {
+    if (p.includes("section=new-audit")) {
+      setActiveSection("new-audit");
+    } else {
+      navigate(p);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -627,9 +634,7 @@ export default function UserDashboard() {
             </div>
           ) : (
             <>
-              {activeSection === "overview"  && <OverviewSection data={data} onNavigate={(p) => {
-                if (p.includes("section=new-audit")) { setActiveSection("new-audit"); } else { navigate(p); }
-              }} />}
+              {activeSection === "overview"  && <OverviewSection data={data} onNavigate={handleNavigate} />}
               {activeSection === "new-audit" && <NewAuditPanel onAuditComplete={handleNewAuditComplete} />}
               {activeSection === "history"   && <HistorySection audits={data.recentAudits} onNavigate={navigate} onNewAudit={() => setActiveSection("new-audit")} />}
               {activeSection === "reports"   && <ReportsSection reports={data.savedReports} onNavigate={navigate} onNewAudit={() => setActiveSection("new-audit")} />}
