@@ -35,7 +35,7 @@ function App() {
   return (
     <ErrorBoundary>
       {/* switchable enables the useTheme hook to toggle between light and dark */}
-      <ThemeProvider defaultTheme="dark" switchable>
+      <ThemeProvider defaultTheme="light" switchable>
         <TooltipProvider>
           <Toaster position="bottom-center" />
           <Router />
