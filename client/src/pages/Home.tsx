@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
-import { getLoginUrl } from "@/const";
 import { INDUSTRIES } from "../../../shared/auditTypes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,7 +89,7 @@ const cardVariant = {
 export default function Home() {
   const [, navigate] = useLocation();
   const search = useSearch();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, openSignIn } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   const searchParams = new URLSearchParams(search);
@@ -233,9 +232,9 @@ export default function Home() {
             ) : (
               <>
                 <button onClick={() => navigate("/pricing")} className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block px-2 py-1">Pricing</button>
-                <a href={getLoginUrl()} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-1.5 hover:border-primary/50">
+                <button onClick={() => openSignIn()} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-1.5 hover:border-primary/50">
                   <LogIn className="w-3.5 h-3.5" /><span>Sign In</span>
-                </a>
+                </button>
               </>
             )}
           </div>

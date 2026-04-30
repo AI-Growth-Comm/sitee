@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { getLoginUrl } from "@/const";
+import { useClerk } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, CheckCircle, Lock, Zap, Loader2, AlertCircle, TrendingUp, Key,
@@ -71,6 +71,7 @@ const UNLOCK_FEATURES = [
 export default function AuditTeaser() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
+  const { openSignIn } = useClerk();
   const auditId = parseInt(params.id ?? "0", 10);
 
   const { data, isLoading, error } = trpc.audit.get.useQuery(
@@ -78,12 +79,12 @@ export default function AuditTeaser() {
     { enabled: !!auditId, retry: false }
   );
 
-  const [loginUrl] = useState(() => {
+  const handleSignIn = () => {
     if (typeof window !== "undefined") {
       sessionStorage.setItem("sitee_return_to", `/audit/${auditId}`);
     }
-    return getLoginUrl();
-  });
+    openSignIn();
+  };
 
   // If user is now signed in, redirect to full results
   useEffect(() => {
@@ -148,7 +149,7 @@ export default function AuditTeaser() {
           </p>
         </div>
         <a
-          href={loginUrl}
+          href="#" onClick={(e) => { e.preventDefault(); handleSignIn(); }}
           className="shrink-0 inline-flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-primary/90 transition-colors"
         >
           <Zap className="w-3 h-3" /> Unlock Free
@@ -290,7 +291,7 @@ export default function AuditTeaser() {
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <a
-                  href={loginUrl}
+                  href="#" onClick={(e) => { e.preventDefault(); handleSignIn(); }}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[#0D9488] font-bold px-6 py-3 rounded-xl hover:bg-white/95 transition-all shadow-md text-sm"
                 >
                   <Zap className="w-4 h-4" />
@@ -300,7 +301,7 @@ export default function AuditTeaser() {
 
               <p className="text-white/60 text-xs">
                 Already have an account?{" "}
-                <a href={loginUrl} className="text-white/90 underline hover:text-white">Sign in</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); handleSignIn(); }} className="text-white/90 underline hover:text-white">Sign in</a>
                 {" · "}
                 <a href="/pricing" className="text-white/90 underline hover:text-white">Compare plans</a>
               </p>
