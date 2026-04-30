@@ -138,9 +138,12 @@ export const appRouter = router({
           }
         }
 
+         // Data isolation: signed-in users can only see their own audits
+        if (audit.userId !== null && audit.userId !== ctx.user.id) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" });
+        }
         return { isTeaser: false as const, audit, checklistDoneMap };
       }),
-
     // Claim a guest audit after sign-in
     claim: publicProcedure
       .input(z.object({ auditId: z.number() }))
@@ -271,8 +274,8 @@ export const appRouter = router({
       }),
   }),
 
-  // ─── Hub (user dashboard) ─────────────────────────────────────────────────────
-  hub: router({
+  // ─── Dashboard (user dashboard) ─────────────────────────────────────────────
+  dashboard: router({
     summary: protectedProcedure.query(async ({ ctx }) => {
       const [allAudits, allReports] = await Promise.all([
         listAuditsForUser(ctx.user.id, 1000),

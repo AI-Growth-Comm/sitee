@@ -75,8 +75,8 @@ export function registerOAuthRoutes(app: Express) {
         }
       }
 
-      // Default: redirect to user hub
-      res.redirect(302, "/hub");
+      // Default: redirect to user dashboard
+      res.redirect(302, "/dashboard");
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });

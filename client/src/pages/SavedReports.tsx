@@ -104,9 +104,9 @@ export default function SavedReports() {
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => navigate("/hub")} className="gap-2 border-primary/30 text-primary hover:bg-primary/10">
+            <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="gap-2 border-primary/30 text-primary hover:bg-primary/10">
               <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">My Hub</span>
+              <span className="hidden sm:inline">Dashboard</span>
             </Button>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
@@ -125,7 +125,7 @@ export default function SavedReports() {
             >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
-            <Button onClick={() => navigate("/")} className="gap-2" size="sm">
+            <Button onClick={() => navigate("/dashboard")} className="gap-2" size="sm">
               <Plus className="w-4 h-4" />
               New Audit
             </Button>
@@ -147,7 +147,7 @@ export default function SavedReports() {
             <p className="text-muted-foreground text-sm max-w-sm mx-auto">
               Run an SEO audit and click "Save Report" to save a professional report here for future reference.
             </p>
-            <Button onClick={() => navigate("/")} className="gap-2">
+            <Button onClick={() => navigate("/dashboard")} className="gap-2">
               <Plus className="w-4 h-4" />
               Run Your First Audit
             </Button>

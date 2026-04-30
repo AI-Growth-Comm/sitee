@@ -1,8 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   LayoutDashboard,
   History,
@@ -17,8 +26,11 @@ import {
   BarChart2,
   Moon,
   Sun,
+  Search,
+  AlertCircle,
 } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
+import { toast } from "sonner";
+import { INDUSTRIES } from "@shared/auditTypes";
 
 // ─── Mini score badge ─────────────────────────────────────────────────────────
 function MiniScore({ score }: { score: number }) {
@@ -34,17 +46,18 @@ function MiniScore({ score }: { score: number }) {
 }
 
 // ─── Section types ────────────────────────────────────────────────────────────
-type Section = "overview" | "history" | "reports" | "profile";
+type Section = "overview" | "new-audit" | "history" | "reports" | "profile";
 
 const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode }[] = [
-  { id: "overview",  label: "Overview",      icon: <LayoutDashboard className="w-4 h-4" /> },
-  { id: "history",   label: "Audit History", icon: <History className="w-4 h-4" /> },
-  { id: "reports",   label: "Reports",       icon: <FileText className="w-4 h-4" /> },
-  { id: "profile",   label: "Profile",       icon: <User className="w-4 h-4" /> },
+  { id: "overview",   label: "Overview",      icon: <LayoutDashboard className="w-4 h-4" /> },
+  { id: "new-audit",  label: "New Audit",     icon: <Plus className="w-4 h-4" /> },
+  { id: "history",    label: "Audit History", icon: <History className="w-4 h-4" /> },
+  { id: "reports",    label: "Reports",       icon: <FileText className="w-4 h-4" /> },
+  { id: "profile",    label: "Profile",       icon: <User className="w-4 h-4" /> },
 ];
 
-// ─── Typed hub data ───────────────────────────────────────────────────────────
-type HubAudit = {
+// ─── Typed dashboard data ─────────────────────────────────────────────────────
+type DashAudit = {
   id: number;
   url: string;
   industry: string;
@@ -53,27 +66,180 @@ type HubAudit = {
   createdAt: Date;
   status: string;
 };
-type HubReport = {
+type DashReport = {
   id: number;
   title: string;
   clientName: string;
   auditId: number;
   createdAt: Date;
 };
-type HubUser = {
+type DashUser = {
   name: string | null;
   email: string | null;
 };
-type HubData = {
+type DashData = {
   auditsUsed: number;
   auditsLimit: number;
-  recentAudits: HubAudit[];
-  savedReports: HubReport[];
-  user: HubUser | null;
+  recentAudits: DashAudit[];
+  savedReports: DashReport[];
+  user: DashUser | null;
 };
 
+const STAGE_MESSAGES = [
+  "📊 Scoring 8 SEO dimensions...",
+  "🔍 Mapping keyword opportunities...",
+  "✏️ Rewriting metadata & schema markup...",
+  "📅 Building 90-day content calendar...",
+  "✅ Creating prioritized action checklist...",
+];
+
+// ─── New Audit Panel ──────────────────────────────────────────────────────────
+function NewAuditPanel({ onAuditComplete }: { onAuditComplete: (auditId: number) => void }) {
+  const [url, setUrl] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [customIndustry, setCustomIndustry] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [stage, setStage] = useState(0);
+  const urlInputRef = useRef<HTMLInputElement>(null);
+  const customInputRef = useRef<HTMLInputElement>(null);
+  const [, navigate] = useLocation();
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (industry === "Other") {
+      setTimeout(() => customInputRef.current?.focus(), 50);
+    }
+  }, [industry]);
+
+  useEffect(() => {
+    if (!loading) { setStage(0); return; }
+    let i = 0;
+    const interval = setInterval(() => {
+      i = Math.min(i + 1, STAGE_MESSAGES.length - 1);
+      setStage(i);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  const runAudit = trpc.audit.run.useMutation({
+    onSuccess: (data) => {
+      setLoading(false);
+      if (isAuthenticated) {
+        onAuditComplete(data.auditId);
+        navigate(`/audit/${data.auditId}`);
+      } else {
+        navigate(`/audit/${data.auditId}/teaser`);
+      }
+    },
+    onError: (err) => {
+      setLoading(false);
+      toast.error(err.message || "Audit failed. Please try again.");
+    },
+  });
+
+  const handleAudit = () => {
+    if (!url.trim()) { toast.error("Please enter a URL"); return; }
+    if (!industry) { toast.error("Please select an industry"); return; }
+    if (industry === "Other" && !customIndustry.trim()) {
+      toast.error("Please enter your business name or type");
+      customInputRef.current?.focus();
+      return;
+    }
+    let normalizedUrl = url.trim();
+    if (!normalizedUrl.startsWith("http")) normalizedUrl = "https://" + normalizedUrl;
+    setLoading(true);
+    runAudit.mutate({
+      url: normalizedUrl,
+      industry,
+      customIndustry: industry === "Other" ? customIndustry.trim() : undefined,
+    });
+  };
+
+  return (
+    <div className="max-w-xl space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold text-foreground mb-1">New Audit</h2>
+        <p className="text-sm text-muted-foreground">Enter a URL and select your industry to run a full AI-powered SEO audit.</p>
+      </div>
+
+      {loading ? (
+        <div className="bg-card border border-border rounded-xl p-8 flex flex-col items-center gap-5">
+          <div className="w-12 h-12 spin-border" />
+          <div className="text-center space-y-1">
+            <p className="text-sm font-medium text-foreground">{STAGE_MESSAGES[stage]}</p>
+            <p className="text-xs text-muted-foreground">This usually takes 30–60 seconds…</p>
+          </div>
+          <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-1000"
+              style={{ width: `${((stage + 1) / STAGE_MESSAGES.length) * 100}%` }}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Website URL</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <Input
+                ref={urlInputRef}
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAudit()}
+                placeholder="https://yourwebsite.com"
+                className="pl-9 bg-background border-border focus:border-primary"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Industry</label>
+            <Select value={industry} onValueChange={setIndustry}>
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue placeholder="Select industry" />
+              </SelectTrigger>
+              <SelectContent>
+                {INDUSTRIES.map((ind) => (
+                  <SelectItem key={ind} value={ind}>{ind}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {industry === "Other" && (
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Business Name / Type</label>
+              <Input
+                ref={customInputRef}
+                value={customIndustry}
+                onChange={(e) => setCustomIndustry(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAudit()}
+                placeholder="e.g. Pet grooming salon"
+                className="bg-background border-border focus:border-primary"
+              />
+            </div>
+          )}
+
+          <Button
+            onClick={handleAudit}
+            disabled={!url.trim() || !industry}
+            className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+          >
+            <Zap className="w-4 h-4" /> Run SEO Audit
+          </Button>
+
+          <p className="text-xs text-center text-muted-foreground">
+            Results in ~60 seconds · No credit card required
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Overview Section ─────────────────────────────────────────────────────────
-function OverviewSection({ data, onNavigate }: { data: HubData; onNavigate: (p: string) => void }) {
+function OverviewSection({ data, onNavigate }: { data: DashData; onNavigate: (p: string) => void }) {
   const lastAudit = data.recentAudits[0];
   const pct = Math.round((data.auditsUsed / data.auditsLimit) * 100);
   const barColor = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-primary";
@@ -128,7 +294,7 @@ function OverviewSection({ data, onNavigate }: { data: HubData; onNavigate: (p: 
         )}
       </div>
 
-      <Button onClick={() => onNavigate("/")} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+      <Button onClick={() => onNavigate("/dashboard?section=new-audit")} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
         <Plus className="w-4 h-4" /> New Audit
       </Button>
     </div>
@@ -136,13 +302,13 @@ function OverviewSection({ data, onNavigate }: { data: HubData; onNavigate: (p: 
 }
 
 // ─── Audit History Section ────────────────────────────────────────────────────
-function HistorySection({ audits, onNavigate }: { audits: HubAudit[]; onNavigate: (p: string) => void }) {
+function HistorySection({ audits, onNavigate, onNewAudit }: { audits: DashAudit[]; onNavigate: (p: string) => void; onNewAudit: () => void }) {
   if (audits.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
         <History className="w-10 h-10 text-muted-foreground/40" />
-        <p className="text-muted-foreground">No audits yet. Run your first audit from the home page.</p>
-        <Button onClick={() => onNavigate("/")} className="gap-2 bg-primary text-primary-foreground">
+        <p className="text-muted-foreground">No audits yet. Run your first audit from the dashboard.</p>
+        <Button onClick={onNewAudit} className="gap-2 bg-primary text-primary-foreground">
           <Plus className="w-4 h-4" /> New Audit
         </Button>
       </div>
@@ -153,7 +319,7 @@ function HistorySection({ audits, onNavigate }: { audits: HubAudit[]; onNavigate
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-foreground">Audit History</h2>
-        <Button onClick={() => onNavigate("/")} size="sm" className="gap-1.5 bg-primary text-primary-foreground">
+        <Button onClick={onNewAudit} size="sm" className="gap-1.5 bg-primary text-primary-foreground">
           <Plus className="w-3.5 h-3.5" /> New Audit
         </Button>
       </div>
@@ -172,7 +338,15 @@ function HistorySection({ audits, onNavigate }: { audits: HubAudit[]; onNavigate
             <tbody className="divide-y divide-border">
               {audits.map((audit) => (
                 <tr key={audit.id} className="hover:bg-muted/20 transition-colors">
-                  <td className="px-4 py-3"><MiniScore score={audit.overallScore} /></td>
+                  <td className="px-4 py-3">
+                    {audit.status === "failed" ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-red-400">
+                        <AlertCircle className="w-4 h-4" /> Failed
+                      </span>
+                    ) : (
+                      <MiniScore score={audit.overallScore} />
+                    )}
+                  </td>
                   <td className="px-4 py-3 max-w-[200px]">
                     <p className="font-medium text-foreground truncate">{audit.url.replace(/^https?:\/\//, "")}</p>
                   </td>
@@ -184,12 +358,16 @@ function HistorySection({ audits, onNavigate }: { audits: HubAudit[]; onNavigate
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => onNavigate(`/audit/${audit.id}`)} className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground">
-                        Results
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => onNavigate(`/audit/${audit.id}/report`)} className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground">
-                        Report
-                      </Button>
+                      {audit.status !== "failed" && (
+                        <>
+                          <Button variant="ghost" size="sm" onClick={() => onNavigate(`/audit/${audit.id}`)} className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground">
+                            Results
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => onNavigate(`/audit/${audit.id}/report`)} className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground">
+                            Report
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -203,13 +381,13 @@ function HistorySection({ audits, onNavigate }: { audits: HubAudit[]; onNavigate
 }
 
 // ─── Reports Section ──────────────────────────────────────────────────────────
-function ReportsSection({ reports, onNavigate }: { reports: HubReport[]; onNavigate: (p: string) => void }) {
+function ReportsSection({ reports, onNavigate, onNewAudit }: { reports: DashReport[]; onNavigate: (p: string) => void; onNewAudit: () => void }) {
   if (reports.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
         <FileText className="w-10 h-10 text-muted-foreground/40" />
         <p className="text-muted-foreground">No saved reports yet. Generate a report from any completed audit.</p>
-        <Button onClick={() => onNavigate("/")} className="gap-2 bg-primary text-primary-foreground">
+        <Button onClick={onNewAudit} className="gap-2 bg-primary text-primary-foreground">
           <Plus className="w-4 h-4" /> New Audit
         </Button>
       </div>
@@ -229,7 +407,7 @@ function ReportsSection({ reports, onNavigate }: { reports: HubReport[]; onNavig
           <div
             key={report.id}
             className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3 hover:border-primary/40 transition-colors cursor-pointer"
-            onClick={() => onNavigate(`/reports/${report.id}`)}
+            onClick={() => onNavigate(`/report/${report.id}`)}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
@@ -247,7 +425,7 @@ function ReportsSection({ reports, onNavigate }: { reports: HubReport[]; onNavig
               variant="outline"
               size="sm"
               className="w-full gap-1.5 text-xs mt-auto"
-              onClick={(e) => { e.stopPropagation(); onNavigate(`/reports/${report.id}`); }}
+              onClick={(e) => { e.stopPropagation(); onNavigate(`/report/${report.id}`); }}
             >
               <ExternalLink className="w-3 h-3" /> View Report
             </Button>
@@ -259,7 +437,7 @@ function ReportsSection({ reports, onNavigate }: { reports: HubReport[]; onNavig
 }
 
 // ─── Profile Section ──────────────────────────────────────────────────────────
-function ProfileSection({ data }: { data: HubData }) {
+function ProfileSection({ data }: { data: DashData }) {
   const pct = Math.round((data.auditsUsed / data.auditsLimit) * 100);
   const barColor = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-primary";
 
@@ -296,15 +474,15 @@ function ProfileSection({ data }: { data: HubData }) {
   );
 }
 
-// ─── Main UserHub Component ───────────────────────────────────────────────────
-export default function UserHub() {
+// ─── Main Dashboard Component ─────────────────────────────────────────────────
+export default function UserDashboard() {
   const [, navigate] = useLocation();
   const { user, isAuthenticated, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [activeSection, setActiveSection] = useState<Section>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const summaryQuery = trpc.hub.summary.useQuery(undefined, {
+  const summaryQuery = trpc.dashboard.summary.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
@@ -326,22 +504,26 @@ export default function UserHub() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-8 h-8 spin-border" />
-          <p className="text-sm text-muted-foreground">Loading your hub...</p>
+          <p className="text-sm text-muted-foreground">Loading your dashboard...</p>
         </div>
       </div>
     );
   }
 
   const rawData = summaryQuery.data;
-  const data: HubData | null = rawData
+  const data: DashData | null = rawData
     ? {
         auditsUsed: rawData.auditsUsed,
         auditsLimit: rawData.auditsLimit,
-        recentAudits: (rawData.recentAudits as HubAudit[]) ?? [],
-        savedReports: (rawData.savedReports as HubReport[]) ?? [],
+        recentAudits: ((rawData.allAudits ?? rawData.recentAudits) as DashAudit[]) ?? [],
+        savedReports: ((rawData.allReports ?? rawData.savedReports) as DashReport[]) ?? [],
         user: rawData.user ? { name: rawData.user.name ?? null, email: rawData.user.email ?? null } : null,
       }
     : null;
+
+  const handleNewAuditComplete = () => {
+    summaryQuery.refetch();
+  };
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -419,6 +601,14 @@ export default function UserHub() {
               {NAV_ITEMS.find((n) => n.id === activeSection)?.label}
             </p>
           </div>
+          {/* Quick new audit button in header */}
+          <Button
+            size="sm"
+            onClick={() => setActiveSection("new-audit")}
+            className="gap-1.5 bg-primary text-primary-foreground text-xs h-8 px-3 hidden sm:flex"
+          >
+            <Plus className="w-3.5 h-3.5" /> New Audit
+          </Button>
           {user && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <div className="w-7 h-7 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center">
@@ -433,14 +623,17 @@ export default function UserHub() {
         <div className="p-6">
           {!data ? (
             <div className="flex items-center justify-center py-20">
-              <p className="text-muted-foreground text-sm">Failed to load hub data. Please refresh.</p>
+              <p className="text-muted-foreground text-sm">Failed to load dashboard data. Please refresh.</p>
             </div>
           ) : (
             <>
-              {activeSection === "overview" && <OverviewSection data={data} onNavigate={navigate} />}
-              {activeSection === "history"  && <HistorySection  audits={data.recentAudits} onNavigate={navigate} />}
-              {activeSection === "reports"  && <ReportsSection  reports={data.savedReports} onNavigate={navigate} />}
-              {activeSection === "profile"  && <ProfileSection  data={data} />}
+              {activeSection === "overview"  && <OverviewSection data={data} onNavigate={(p) => {
+                if (p.includes("section=new-audit")) { setActiveSection("new-audit"); } else { navigate(p); }
+              }} />}
+              {activeSection === "new-audit" && <NewAuditPanel onAuditComplete={handleNewAuditComplete} />}
+              {activeSection === "history"   && <HistorySection audits={data.recentAudits} onNavigate={navigate} onNewAudit={() => setActiveSection("new-audit")} />}
+              {activeSection === "reports"   && <ReportsSection reports={data.savedReports} onNavigate={navigate} onNewAudit={() => setActiveSection("new-audit")} />}
+              {activeSection === "profile"   && <ProfileSection data={data} />}
             </>
           )}
         </div>

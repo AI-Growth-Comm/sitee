@@ -9,7 +9,7 @@ import AuditDashboard from "./pages/AuditDashboard";
 import ReportViewer from "./pages/ReportViewer";
 import SavedReports from "./pages/SavedReports";
 import SavedReportViewer from "./pages/SavedReportViewer";
-import UserHub from "./pages/UserHub";
+import UserDashboard from "./pages/UserHub";
 import AuditTeaser from "./pages/AuditTeaser";
 import Pricing from "./pages/Pricing";
 
@@ -17,7 +17,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/hub" component={UserHub} />
+      <Route path="/hub" component={UserDashboard} />
+      <Route path="/dashboard" component={UserDashboard} />
       <Route path="/audit/:id/teaser" component={AuditTeaser} />
       <Route path="/audit/:id" component={AuditDashboard} />
       <Route path="/audit/:id/report" component={ReportViewer} />

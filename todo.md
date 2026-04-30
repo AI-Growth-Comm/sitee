@@ -178,3 +178,11 @@
 ## Hub Shell Option A (v9)
 - [ ] Rewrite UserHub.tsx: inline audit/report/saved-report rendering with selectedAuditId state
 - [ ] TypeScript check + tests + checkpoint
+
+## New Sprint (v10)
+- [x] Fix data isolation: audit.list, hub.summary, report.list must be strictly scoped to ctx.user.id — no guest/cross-account leakage
+- [x] Rename all "hub" → "dashboard": routes (/hub → /dashboard), nav labels, component names, UI text, server router key
+- [x] Add inline "New Audit" panel inside the Dashboard (URL input + industry select + loading + redirect to results — no home page redirect)
+- [x] Expand home page: add 5 SEO/AEO/GEO content sections (How we help, AI standards, Problems solved, Fast updates, Who it's for)
+- [x] Add 6 FAQs accordion to home page
+- [x] Add full SEO meta tags + OG tags + JSON-LD to index.html

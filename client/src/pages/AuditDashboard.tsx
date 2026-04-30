@@ -870,11 +870,11 @@ export default function AuditDashboard() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate("/hub")}
+                onClick={() => navigate("/dashboard")}
                 className="gap-1.5 text-muted-foreground hover:text-foreground hidden md:flex"
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                My Hub
+                Dashboard
               </Button>
             )}
           </div>

@@ -1023,9 +1023,9 @@ export default function ReportViewer() {
             {isAuthenticated && (
               <>
                 <SaveReportDialog auditId={auditId} auditUrl={audit.url} />
-                <Button variant="ghost" size="sm" onClick={() => navigate("/hub")} className="gap-2 text-muted-foreground hover:text-foreground hidden md:flex">
+                <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="gap-2 text-muted-foreground hover:text-foreground hidden md:flex">
                   <BookOpen className="w-4 h-4" />
-                  <span className="hidden lg:inline">My Hub</span>
+                  <span className="hidden lg:inline">Dashboard</span>
                 </Button>
               </>
             )}

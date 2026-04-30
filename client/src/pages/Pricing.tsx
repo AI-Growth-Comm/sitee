@@ -109,7 +109,7 @@ export default function Pricing() {
   const loginUrl = getLoginUrl();
 
   function getPlanCta(plan: typeof PLANS[number]) {
-    if (plan.id === "free") return isAuthenticated ? () => navigate("/hub") : () => window.location.href = loginUrl;
+    if (plan.id === "free") return isAuthenticated ? () => navigate("/dashboard") : () => window.location.href = loginUrl;
     if (plan.id === "agency") return () => window.location.href = "mailto:hello@trysitee.com?subject=Agency%20Plan";
     return () => window.location.href = loginUrl;
   }
@@ -141,8 +141,8 @@ export default function Pricing() {
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
           {isAuthenticated ? (
-            <Button size="sm" onClick={() => navigate("/hub")} className="gap-1.5 bg-primary text-primary-foreground">
-              My Hub
+            <Button size="sm" onClick={() => navigate("/dashboard")} className="gap-1.5 bg-primary text-primary-foreground">
+              Dashboard
             </Button>
           ) : (
             <Button size="sm" onClick={() => window.location.href = loginUrl} className="gap-1.5 bg-primary text-primary-foreground">
