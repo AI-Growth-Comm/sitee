@@ -164,3 +164,17 @@
 - [x] Polish SavedReports / SavedReportViewer flow: consistent nav, back to hub
 - [x] Build Pricing.tsx at /pricing (3-tier: Free/Pro/Agency, feature comparison table)
 - [x] Link /pricing from Home nav and teaser sign-in wall
+
+## Hub Shell Refactor (v8)
+- [ ] Update hub.summary to return full audit history (not just 5)
+- [ ] Add hub sub-routes to App.tsx: /hub/audit/:id, /hub/audit/:id/report, /hub/reports, /hub/reports/:id
+- [ ] Build HubShell layout with persistent sidebar + dynamic main area
+- [ ] Build inline NewAudit panel (form + loading + results inside hub)
+- [ ] Adapt AuditDashboard → HubAuditView (no standalone nav, inside hub shell)
+- [ ] Adapt ReportViewer → HubReportView (no standalone nav, inside hub shell)
+- [ ] Adapt SavedReports + SavedReportViewer → hub sections
+- [ ] Keep standalone /audit/:id and /audit/:id/report routes for backward compat
+
+## Hub Shell Option A (v9)
+- [ ] Rewrite UserHub.tsx: inline audit/report/saved-report rendering with selectedAuditId state
+- [ ] TypeScript check + tests + checkpoint

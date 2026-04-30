@@ -274,16 +274,17 @@ export const appRouter = router({
   // ─── Hub (user dashboard) ─────────────────────────────────────────────────────
   hub: router({
     summary: protectedProcedure.query(async ({ ctx }) => {
-      const [recentAudits, savedReports] = await Promise.all([
-        listAuditsForUser(ctx.user.id, 5),
-        listReportsForUser(ctx.user.id, 5),
+      const [allAudits, allReports] = await Promise.all([
+        listAuditsForUser(ctx.user.id, 1000),
+        listReportsForUser(ctx.user.id, 1000),
       ]);
-      const allAudits = await listAuditsForUser(ctx.user.id, 1000);
       return {
         auditsUsed: allAudits.length,
         auditsLimit: 50,
-        recentAudits,
-        savedReports,
+        recentAudits: allAudits.slice(0, 5),
+        allAudits,
+        savedReports: allReports.slice(0, 5),
+        allReports,
         user: ctx.user,
       };
     }),
