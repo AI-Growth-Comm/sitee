@@ -1,7 +1,7 @@
 const MODELS = [
-  "google/gemini-2.5-flash-preview:free",
-  "deepseek/deepseek-r1:free",
-  "meta-llama/llama-4-maverick:free",
+  "google/gemini-2.0-flash-001",
+  "openai/gpt-4o-mini",
+  "anthropic/claude-3-haiku",
 ];
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
