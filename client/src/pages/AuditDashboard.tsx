@@ -8,6 +8,7 @@ import { RadarChartView, BarChartView } from "@/components/audit/AuditCharts";
 import { PriorityBadge, IntentBadge, CategoryBadge, TypeBadge } from "@/components/audit/Badges";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import {
   ArrowLeft, Zap, Copy, Check, Download, RotateCcw,
   ChevronDown, ChevronUp, ExternalLink, Link2, AlertCircle,
@@ -49,8 +50,11 @@ function OverviewTab({ overview, linking }: { overview: Overview; linking: Inter
             const color = dim.score >= 70 ? "text-green-400" : dim.score >= 45 ? "text-amber-400" : "text-red-400";
             const borderColor = dim.score >= 70 ? "border-green-500/20" : dim.score >= 45 ? "border-amber-500/20" : "border-red-500/20";
             const barColor = dim.score >= 70 ? "#4ade80" : dim.score >= 45 ? "#fbbf24" : "#f87171";
+            const scoreLabel = dim.score >= 70 ? "Good — maintain this" : dim.score >= 45 ? "Needs improvement" : "Critical — fix urgently";
             return (
-              <div key={dim.name} className={`bg-card border ${borderColor} rounded-lg p-3`}>
+              <Tooltip key={dim.name}>
+              <TooltipTrigger asChild>
+              <div className={`bg-card border ${borderColor} rounded-lg p-3 cursor-default`}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-medium text-muted-foreground truncate pr-1">{dim.name}</span>
                   <span className={`text-lg font-bold tabular-nums shrink-0 ${color}`}>{dim.score}</span>
@@ -63,6 +67,14 @@ function OverviewTab({ overview, linking }: { overview: Overview; linking: Inter
                   />
                 </div>
               </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p className="font-semibold">{dim.name}</p>
+                <p>Score: {dim.score}/10 — {scoreLabel}</p>
+                <p className="text-xs opacity-80 mt-0.5">{dim.note}</p>
+                <p className="text-xs opacity-60 mt-0.5">Priority: {dim.priority}</p>
+              </TooltipContent>
+              </Tooltip>
             );
           })}
         </div>
@@ -133,19 +145,26 @@ function KeywordsTab({ keywords }: { keywords: Keywords }) {
       </div>
       <div className="flex gap-2 flex-wrap items-center">
         <span className="text-xs text-muted-foreground">Filter by priority:</span>
-        {filters.map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              filter === f
-                ? "bg-blue-600 text-white"
-                : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-blue-500/50"
-            }`}
-          >
-            {f}
-          </button>
-        ))}
+        {filters.map((f) => {
+          const filterDesc: Record<string,string> = { ALL: "Show all keyword opportunities", URGENT: "Target immediately — quick wins", HIGH: "Target within 1–2 weeks", MEDIUM: "Target within 1 month", LOW: "Long-term opportunities" };
+          return (
+            <Tooltip key={f}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setFilter(f)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    filter === f
+                      ? "bg-blue-600 text-white"
+                      : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-blue-500/50"
+                  }`}
+                >
+                  {f}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{filterDesc[f]}</TooltipContent>
+            </Tooltip>
+          );
+        })}
         <span className="text-xs text-muted-foreground ml-auto">{filtered.length} keywords</span>
       </div>
       <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -846,7 +865,12 @@ export default function AuditDashboard({ embeddedId, onBack, onViewReport }: { e
                 ? (audit as any).customIndustry
                 : audit.industry}
             </span>
-            <MiniScoreRing score={audit.overallScore} size={40} />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span><MiniScoreRing score={audit.overallScore} size={40} /></span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Overall SEO score (0–100). 70+ is good, 45–69 needs work, below 45 is critical.</TooltipContent>
+            </Tooltip>
             {/* Theme toggle */}
             <Button
               variant="ghost"
@@ -884,9 +908,21 @@ export default function AuditDashboard({ embeddedId, onBack, onViewReport }: { e
         {/* Tab bar */}
         <div className="border-t border-border overflow-x-auto scrollbar-none">
           <div className="container flex gap-0 min-w-max">
-            {TABS.map((tab) => (
+            {TABS.map((tab) => {
+              const tabDescriptions: Record<string, string> = {
+                Overview: "Overall SEO score, 8 dimension scores, and key insights",
+                Keywords: "Keyword opportunities ranked by volume, difficulty, and intent",
+                Metadata: "Title tags, meta descriptions, and H1 rewrites for each page",
+                Schema: "Structured data (JSON-LD) recommendations for rich results",
+                Calendar: "90-day content publishing calendar with target keywords",
+                Checklist: "Prioritized action items — check off tasks as you complete them",
+                "Internal Links": "Topical clusters and internal linking opportunities",
+                History: "All previous audits for this site",
+              };
+              return (
+              <Tooltip key={tab}>
+              <TooltipTrigger asChild>
               <button
-                key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 relative ${
                   activeTab === tab
@@ -899,7 +935,11 @@ export default function AuditDashboard({ embeddedId, onBack, onViewReport }: { e
                   <span className="absolute top-1.5 right-1 w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
                 )}
               </button>
-            ))}
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{tabDescriptions[tab]}</TooltipContent>
+              </Tooltip>
+              );
+            })}
           </div>
         </div>
       </header>
@@ -915,10 +955,20 @@ export default function AuditDashboard({ embeddedId, onBack, onViewReport }: { e
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-xs text-muted-foreground hidden sm:block">{(audit as any).customIndustry || audit.industry}</span>
-            <MiniScoreRing score={audit.overallScore} size={36} />
-            <Button variant="outline" size="sm" onClick={() => onViewReport?.(auditId)} className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10">
-              <FileText className="w-3.5 h-3.5" /> Report
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span><MiniScoreRing score={audit.overallScore} size={36} /></span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Overall SEO score (0–100)</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={() => onViewReport?.(auditId)} className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10">
+                  <FileText className="w-3.5 h-3.5" /> Report
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Generate a full printable SEO report for this audit</TooltipContent>
+            </Tooltip>
           </div>
         </div>
       )}

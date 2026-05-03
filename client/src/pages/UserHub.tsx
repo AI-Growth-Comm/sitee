@@ -7,6 +7,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -51,12 +52,12 @@ function MiniScore({ score }: { score: number }) {
 type Section = "overview" | "new-audit" | "history" | "reports" | "profile";
 type InlineView = { type: "audit" | "report"; auditId: number } | null;
 
-const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode }[] = [
-  { id: "overview",   label: "Overview",      icon: <LayoutDashboard className="w-4 h-4" /> },
-  { id: "new-audit",  label: "New Audit",     icon: <Plus className="w-4 h-4" /> },
-  { id: "history",    label: "Audit History", icon: <History className="w-4 h-4" /> },
-  { id: "reports",    label: "Reports",       icon: <FileText className="w-4 h-4" /> },
-  { id: "profile",    label: "Profile",       icon: <User className="w-4 h-4" /> },
+const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode; tooltip: string }[] = [
+  { id: "overview",   label: "Overview",      icon: <LayoutDashboard className="w-4 h-4" />, tooltip: "Dashboard overview — audit usage, last score, and quick actions" },
+  { id: "new-audit",  label: "New Audit",     icon: <Plus className="w-4 h-4" />,            tooltip: "Run a new AI-powered SEO audit on any URL in ~60 seconds" },
+  { id: "history",    label: "Audit History", icon: <History className="w-4 h-4" />,         tooltip: "All your past audits — view results, re-run, or compare scores" },
+  { id: "reports",    label: "Reports",       icon: <FileText className="w-4 h-4" />,        tooltip: "Saved SEO reports — download or share with clients" },
+  { id: "profile",    label: "Profile",       icon: <User className="w-4 h-4" />,            tooltip: "Your account details and audit usage stats" },
 ];
 
 // ─── Typed dashboard data ─────────────────────────────────────────────────────
@@ -567,40 +568,51 @@ export default function UserDashboard() {
         {/* Nav items */}
         <nav className="flex-1 py-3 space-y-0.5 px-2">
           {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => { setInlineView(null); setActiveSection(item.id); }}
-              title={!sidebarOpen ? item.label : undefined}
-              className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
-                activeSection === item.id
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-              } ${!sidebarOpen ? "justify-center" : ""}`}
-            >
-              {item.icon}
-              {sidebarOpen && <span className="truncate">{item.label}</span>}
-            </button>
+            <Tooltip key={item.id}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => { setInlineView(null); setActiveSection(item.id); }}
+                  className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
+                    activeSection === item.id
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                  } ${!sidebarOpen ? "justify-center" : ""}`}
+                >
+                  {item.icon}
+                  {sidebarOpen && <span className="truncate">{item.label}</span>}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{item.tooltip}</TooltipContent>
+            </Tooltip>
           ))}
         </nav>
 
         {/* Bottom: theme + logout */}
         <div className="border-t border-border p-2 space-y-0.5">
-          <button
-            onClick={toggleTheme}
-            title={!sidebarOpen ? (theme === "dark" ? "Light mode" : "Dark mode") : undefined}
-            className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors ${!sidebarOpen ? "justify-center" : ""}`}
-          >
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            {sidebarOpen && <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>}
-          </button>
-          <button
-            onClick={() => logoutMutation.mutate()}
-            title={!sidebarOpen ? "Sign out" : undefined}
-            className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors ${!sidebarOpen ? "justify-center" : ""}`}
-          >
-            <LogOut className="w-4 h-4" />
-            {sidebarOpen && <span>Sign out</span>}
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={toggleTheme}
+                className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors ${!sidebarOpen ? "justify-center" : ""}`}
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {sidebarOpen && <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Toggle between light and dark mode</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => logoutMutation.mutate()}
+                className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors ${!sidebarOpen ? "justify-center" : ""}`}
+              >
+                <LogOut className="w-4 h-4" />
+                {sidebarOpen && <span>Sign out</span>}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Sign out of your account</TooltipContent>
+          </Tooltip>
         </div>
       </aside>
 

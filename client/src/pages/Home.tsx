@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import {
   Search, Zap, BarChart3, ChevronRight, LogIn, FileText, Target, Calendar,
   Moon, Sun, BookOpen, TrendingUp, Wrench, BarChart2, Bot, AlertCircle,
@@ -275,29 +276,41 @@ export default function Home() {
           <div className="bg-card border border-border rounded-xl p-6 shadow-xl shadow-black/10">
             <div className="flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                  <Input
-                    ref={urlInputRef}
-                    type="url"
-                    placeholder="https://yourwebsite.com"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="pl-10 h-12 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-blue-500/50"
-                    autoFocus
-                  />
-                </div>
-                <Select value={industry} onValueChange={(val) => { setIndustry(val); if (val !== "Other") setCustomIndustry(""); }}>
-                  <SelectTrigger className="sm:w-48 h-12 bg-background border-border text-foreground">
-                    <SelectValue placeholder="Select industry" />
-                  </SelectTrigger>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        ref={urlInputRef}
+                        type="url"
+                        placeholder="https://yourwebsite.com"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="pl-10 h-12 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-blue-500/50"
+                        autoFocus
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>Enter the full URL of the website you want to audit (e.g. https://example.com)</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Select value={industry} onValueChange={(val) => { setIndustry(val); if (val !== "Other") setCustomIndustry(""); }}>
+                        <SelectTrigger className="sm:w-48 h-12 bg-background border-border text-foreground">
+                          <SelectValue placeholder="Select industry" />
+                        </SelectTrigger>
                   <SelectContent className="bg-card border-border">
                     {INDUSTRIES.map((ind) => (
                       <SelectItem key={ind} value={ind} className="text-foreground hover:bg-accent">{ind}</SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                      </SelectContent>
+                      </Select>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>Choose your industry so the AI tailors keyword and content recommendations to your market</TooltipContent>
+                </Tooltip>
               </div>
               {industry === "Other" && (
                 <div className="relative">
@@ -314,14 +327,19 @@ export default function Home() {
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{customIndustry.length}/100</span>
                 </div>
               )}
-              <Button
-                onClick={handleAudit}
-                disabled={!url.trim() || !industry || (industry === "Other" && !customIndustry.trim())}
-                className="h-12 text-base font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all"
-              >
-                <Zap className="w-4 h-4 mr-2" />
-                Run SEO Audit
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleAudit}
+                    disabled={!url.trim() || !industry || (industry === "Other" && !customIndustry.trim())}
+                    className="h-12 text-base font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-all"
+                  >
+                    <Zap className="w-4 h-4 mr-2" />
+                    Run SEO Audit
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Analyze your site across 8 SEO dimensions in ~60 seconds — free, no account required</TooltipContent>
+              </Tooltip>
             </div>
           </div>
 
