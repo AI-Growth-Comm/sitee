@@ -68,10 +68,11 @@ function ScoreArc({ score, size = 120 }: { score: number; size?: number }) {
   );
 }
 
-export default function SavedReportViewer() {
+export default function SavedReportViewer({ embeddedId, onBack }: { embeddedId?: number; onBack?: () => void } = {}) {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
-  const reportId = parseInt(params.id ?? "0", 10);
+  const reportId = embeddedId ?? parseInt(params.id ?? "0", 10);
+  const handleBack = onBack ?? (() => navigate("/dashboard?section=reports"));
   const [activeSection, setActiveSection] = useState<"cover" | "module1" | "module2" | "module3" | "module4">("cover");
 
   const { data, isLoading, error } = trpc.report.get.useQuery(
@@ -96,7 +97,7 @@ export default function SavedReportViewer() {
         <div className="text-center space-y-4">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
           <p className="text-foreground font-semibold">Report not found</p>
-          <Button onClick={() => navigate("/reports")} variant="outline">View All Reports</Button>
+          <Button onClick={handleBack} variant="outline">View All Reports</Button>
         </div>
       </div>
     );
@@ -124,7 +125,7 @@ export default function SavedReportViewer() {
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border print:hidden">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/reports")} className="gap-2 text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" size="sm" onClick={handleBack} className="gap-2 text-muted-foreground hover:text-foreground">
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">All Reports</span>
             </Button>
@@ -141,7 +142,7 @@ export default function SavedReportViewer() {
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Print / PDF</span>
             </Button>
-            <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate(`/audit/${audit.id}`)}>
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate(`/dashboard?auditId=${audit.id}`)}>
               <ExternalLink className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
             </Button>
@@ -250,7 +251,7 @@ export default function SavedReportViewer() {
                     <p className="font-semibold text-foreground">View Full Report</p>
                     <p className="text-sm text-muted-foreground mt-1">Open the complete interactive report with all 4 modules.</p>
                   </div>
-                  <Button onClick={() => navigate(`/audit/${audit.id}/report`)} className="gap-2">
+                  <Button onClick={() => onBack ? onBack() : navigate(`/dashboard?reportAuditId=${audit.id}`)} className="gap-2">
                     <ExternalLink className="w-4 h-4" />
                     Open Full Report
                   </Button>

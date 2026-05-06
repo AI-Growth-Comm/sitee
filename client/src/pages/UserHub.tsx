@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 const AuditDashboard = lazy(() => import("./AuditDashboard"));
 const ReportViewer = lazy(() => import("./ReportViewer"));
-import { useLocation } from "wouter";
+const SavedReportViewer = lazy(() => import("./SavedReportViewer"));
+import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -50,7 +51,11 @@ function MiniScore({ score }: { score: number }) {
 
 // ─── Section types ────────────────────────────────────────────────────────────
 type Section = "overview" | "new-audit" | "history" | "reports" | "profile";
-type InlineView = { type: "audit" | "report"; auditId: number } | null;
+type InlineView =
+  | { type: "audit"; auditId: number }
+  | { type: "report"; auditId: number }
+  | { type: "savedReport"; reportId: number }
+  | null;
 
 const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode; tooltip: string }[] = [
   { id: "overview",   label: "Overview",      icon: <LayoutDashboard className="w-4 h-4" />, tooltip: "Dashboard overview — audit usage, last score, and quick actions" },
@@ -480,11 +485,25 @@ function ProfileSection({ data }: { data: DashData }) {
 // ─── Main Dashboard Component ─────────────────────────────────────────────────
 export default function UserDashboard() {
   const [, navigate] = useLocation();
+  const search = useSearch();
   const { user, isAuthenticated, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [activeSection, setActiveSection] = useState<Section>("overview");
+
+  // Parse query params to open inline views from redirected routes
+  const searchParams = new URLSearchParams(search);
+  const qAuditId       = searchParams.get("auditId");
+  const qReportAuditId = searchParams.get("reportAuditId");
+  const qSavedReportId = searchParams.get("savedReportId");
+  const qSection       = searchParams.get("section") as Section | null;
+
+  const [activeSection, setActiveSection] = useState<Section>(qSection ?? "overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [inlineView, setInlineView] = useState<InlineView>(null);
+  const [inlineView, setInlineView] = useState<InlineView>(
+    qReportAuditId ? { type: "report", auditId: Number(qReportAuditId) }
+    : qAuditId     ? { type: "audit",  auditId: Number(qAuditId) }
+    : qSavedReportId ? { type: "savedReport", reportId: Number(qSavedReportId) }
+    : null
+  );
 
   const summaryQuery = trpc.dashboard.summary.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -538,6 +557,10 @@ export default function UserDashboard() {
     if (reportMatch) { setInlineView({ type: "report", auditId: Number(reportMatch[1]) }); return; }
     const auditMatch = p.match(/^\/audit\/(\d+)$/);
     if (auditMatch) { setInlineView({ type: "audit", auditId: Number(auditMatch[1]) }); return; }
+    const savedReportMatch = p.match(/^\/report\/(\d+)$/);
+    if (savedReportMatch) { setInlineView({ type: "savedReport", reportId: Number(savedReportMatch[1]) }); return; }
+    // Handle /reports list — switch to reports section
+    if (p === "/reports") { setInlineView(null); setActiveSection("reports"); return; }
     navigate(p);
   };
 
@@ -654,10 +677,15 @@ export default function UserDashboard() {
                 onBack={() => setInlineView(null)}
                 onViewReport={(id) => setInlineView({ type: "report", auditId: id })}
               />
-            ) : (
+            ) : inlineView.type === "report" ? (
               <ReportViewer
                 embeddedId={inlineView.auditId}
                 onBack={() => setInlineView({ type: "audit", auditId: inlineView.auditId })}
+              />
+            ) : (
+              <SavedReportViewer
+                embeddedId={inlineView.reportId}
+                onBack={() => setInlineView(null)}
               />
             )}
           </Suspense>
