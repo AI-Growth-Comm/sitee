@@ -116,7 +116,7 @@ const STAGE_MESSAGES = [
 ];
 
 // ─── New Audit Panel ──────────────────────────────────────────────────────────
-function NewAuditPanel({ onAuditComplete }: { onAuditComplete: (auditId: number) => void }) {
+function NewAuditPanel({ onAuditComplete, auditsUsed = 0, auditsLimit = 1, userEmail = "" }: { onAuditComplete: (auditId: number) => void; auditsUsed?: number; auditsLimit?: number; userEmail?: string }) {
   const [url, setUrl] = useState("");
   const [industry, setIndustry] = useState("");
   const [customIndustry, setCustomIndustry] = useState("");
@@ -179,6 +179,11 @@ function NewAuditPanel({ onAuditComplete }: { onAuditComplete: (auditId: number)
     });
   };
 
+  // Determine if user is on unlimited plan (admin email) or has hit their limit
+  const ADMIN_EMAIL = "frankb4435@gmail.com";
+  const isUnlimited = userEmail === ADMIN_EMAIL;
+  const isAtLimit = !isUnlimited && auditsUsed >= auditsLimit;
+
   return (
     <div className="max-w-xl space-y-6">
       <div>
@@ -186,7 +191,26 @@ function NewAuditPanel({ onAuditComplete }: { onAuditComplete: (auditId: number)
         <p className="text-sm text-muted-foreground">Enter a URL and select your industry to run a full AI-powered SEO audit.</p>
       </div>
 
-      {loading ? (
+      {isAtLimit ? (
+        <div className="bg-card border border-amber-500/30 rounded-xl p-8 text-center space-y-4">
+          <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto">
+            <Zap className="w-7 h-7 text-amber-500" />
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-foreground">Free Audit Used</p>
+            <p className="text-sm text-muted-foreground mt-1">You have used your {auditsLimit} free audit. Upgrade to Pro to run unlimited audits and unlock all features.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button onClick={() => window.location.href = "/pricing"} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
+              <Zap className="w-4 h-4" /> View Plans
+            </Button>
+            <Button variant="outline" onClick={() => window.location.href = "mailto:support@sitemizer.ai"} className="gap-2">
+              Contact Sales
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">Pro plan: unlimited audits · PDF reports · Priority support</p>
+        </div>
+      ) : loading ? (
         <div className="bg-card border border-border rounded-xl p-8 flex flex-col items-center gap-5">
           <div className="w-12 h-12 spin-border" />
           <div className="text-center space-y-1">
@@ -812,7 +836,7 @@ export default function UserDashboard() {
             ) : (
               <>
                 {activeSection === "overview"  && <OverviewSection data={data} onNavigate={handleNavigate} />}
-                {activeSection === "new-audit" && <NewAuditPanel onAuditComplete={handleNewAuditComplete} />}
+                {activeSection === "new-audit" && <NewAuditPanel onAuditComplete={handleNewAuditComplete} auditsUsed={data.auditsUsed} auditsLimit={data.auditsLimit} userEmail={data.user?.email ?? ""} />}
                 {activeSection === "history"   && <HistorySection audits={data.allAudits ?? data.recentAudits} reports={data.savedReports} onNavigate={handleNavigate} onNewAudit={() => setActiveSection("new-audit")} />}
                 {activeSection === "reports"   && <HistorySection audits={data.allAudits ?? data.recentAudits} reports={data.savedReports} onNavigate={handleNavigate} onNewAudit={() => setActiveSection("new-audit")} defaultTab="reports" />}
                 {activeSection === "profile"   && <ProfileSection data={data} />}

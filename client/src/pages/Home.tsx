@@ -143,6 +143,10 @@ export default function Home() {
   }, [loading]);
 
   const handleAudit = () => {
+    if (!isAuthenticated) {
+      window.location.href = getLoginUrl();
+      return;
+    }
     if (!url.trim()) { toast.error("Please enter a URL"); return; }
     if (!industry) { toast.error("Please select an industry"); return; }
     if (industry === "Other" && !customIndustry.trim()) {
@@ -340,7 +344,7 @@ export default function Home() {
                     Run SEO Audit
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Analyze your site across 8 SEO dimensions in ~60 seconds — free, no account required</TooltipContent>
+                <TooltipContent>{isAuthenticated ? "Analyze your site across 8 SEO dimensions in ~60 seconds" : "Sign in to run your free SEO audit"}</TooltipContent>
               </Tooltip>
             </div>
           </div>
