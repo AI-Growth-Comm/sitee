@@ -25,12 +25,23 @@ import {
 } from "./db";
 import { runFullAudit } from "./auditEngine";
 import { runPostAuditQualityPipeline, loadCriteriaForDomain, formatCriteriaAsContext, normalizeDomain } from "./qualityLearningEngine";
+import { ENV } from "./_core/env";
+import { getDb } from "./db";
+import { users } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
-    logout: publicProcedure.mutation(() => ({ success: true } as const)),
+    logout: publicProcedure.mutation(async ({ ctx }) => {
+      // Clear the session cookie server-side with matching options
+      const { getSessionCookieOptions } = await import("./_core/cookies");
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.clearCookie("app_session_id", cookieOptions);
+      ctx.res.clearCookie("sitee_guest_token");
+      return { success: true } as const;
+    }),
   }),
 
   audit: router({
@@ -45,13 +56,42 @@ export const appRouter = router({
       )
       .mutation(async ({ input, ctx }) => {
         const userId = ctx.user?.id ?? null;
+
+        // Require sign-in to run audits
+        if (!ctx.user) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Please sign in to run an audit." });
+        }
+
+        // Enforce per-plan audit limits
+        const userEmail = ctx.user.email ?? "";
+        const isAdminEmail = userEmail === ENV.adminEmail;
+        if (!isAdminEmail) {
+          const db = await getDb();
+          if (db) {
+            const userRow = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+            const userRecord = userRow[0];
+            if (userRecord) {
+              const plan = userRecord.plan ?? "free";
+              const limit = plan === "free" ? 1 : plan === "pro" ? 10 : plan === "starter" ? 5 : 999999;
+              const used = await listAuditsForUser(ctx.user.id, 9999);
+              if (used.length >= limit) {
+                const planLabel = plan === "free" ? "Free" : plan === "pro" ? "Pro" : plan === "starter" ? "Starter" : "Agency";
+                throw new TRPCError({
+                  code: "FORBIDDEN",
+                  message: `You have reached your ${planLabel} plan limit of ${limit} audit${limit === 1 ? "" : "s"}. Please upgrade to run more audits.`,
+                });
+              }
+            }
+          }
+        }
+
         const startTime = Date.now();
         // Build the effective industry context for the AI engine
         const effectiveIndustry =
           input.industry === "Other" && input.customIndustry?.trim()
             ? input.customIndustry.trim()
             : input.industry;
-        // Generate a guest token for unauthenticated users so they can claim later
+        // No guest tokens needed — sign-in is required
         const guestToken = userId === null
           ? Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
           : null;
@@ -325,7 +365,7 @@ export const appRouter = router({
   quality: router({
     // List all completed audits for admin review
     listAudits: protectedProcedure.query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      if (ctx.user.role !== "admin" || ctx.user.email !== ENV.adminEmail) throw new TRPCError({ code: "FORBIDDEN" });
       return listAllAuditsForAdmin(100);
     }),
 
@@ -333,7 +373,7 @@ export const appRouter = router({
     getAuditForReview: protectedProcedure
       .input(z.object({ auditId: z.number() }))
       .query(async ({ input, ctx }) => {
-        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        if (ctx.user.role !== "admin" || ctx.user.email !== ENV.adminEmail) throw new TRPCError({ code: "FORBIDDEN" });
         const audit = await getAuditById(input.auditId);
         if (!audit) throw new TRPCError({ code: "NOT_FOUND", message: "Audit not found" });
         const review = await getAuditReview(input.auditId, ctx.user.id);
@@ -352,7 +392,7 @@ export const appRouter = router({
         notes: z.string(),
       }))
       .mutation(async ({ input, ctx }) => {
-        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        if (ctx.user.role !== "admin" || ctx.user.email !== ENV.adminEmail) throw new TRPCError({ code: "FORBIDDEN" });
         const reviewId = await upsertAuditReview({
           auditId: input.auditId,
           reviewerId: ctx.user.id,
@@ -365,7 +405,7 @@ export const appRouter = router({
 
     // List all submitted reviews
     listReviews: protectedProcedure.query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      if (ctx.user.role !== "admin" || ctx.user.email !== ENV.adminEmail) throw new TRPCError({ code: "FORBIDDEN" });
       return listAuditReviews(50);
     }),
 
@@ -373,7 +413,7 @@ export const appRouter = router({
     analyzeAccuracy: protectedProcedure
       .input(z.object({ auditId: z.number() }))
       .mutation(async ({ input, ctx }) => {
-        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        if (ctx.user.role !== "admin" || ctx.user.email !== ENV.adminEmail) throw new TRPCError({ code: "FORBIDDEN" });
         const audit = await getAuditById(input.auditId);
         if (!audit) throw new TRPCError({ code: "NOT_FOUND", message: "Audit not found" });
 
@@ -439,7 +479,7 @@ export const appRouter = router({
     getInsights: protectedProcedure
       .input(z.object({ auditId: z.number() }))
       .query(async ({ input, ctx }) => {
-        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        if (ctx.user.role !== "admin" || ctx.user.email !== ENV.adminEmail) throw new TRPCError({ code: "FORBIDDEN" });
         const { getDb } = await import("./db");
         const db = await getDb();
         if (!db) return null;
@@ -453,7 +493,7 @@ export const appRouter = router({
     getCriteriaForDomain: protectedProcedure
       .input(z.object({ domain: z.string() }))
       .query(async ({ input, ctx }) => {
-        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        if (ctx.user.role !== "admin" || ctx.user.email !== ENV.adminEmail) throw new TRPCError({ code: "FORBIDDEN" });
         const { getDb } = await import("./db");
         const db = await getDb();
         if (!db) return [];
@@ -466,7 +506,7 @@ export const appRouter = router({
     dismissCriteria: protectedProcedure
       .input(z.object({ criteriaId: z.number() }))
       .mutation(async ({ input, ctx }) => {
-        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        if (ctx.user.role !== "admin" || ctx.user.email !== ENV.adminEmail) throw new TRPCError({ code: "FORBIDDEN" });
         const { getDb } = await import("./db");
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });

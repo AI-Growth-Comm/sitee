@@ -265,3 +265,14 @@
 - [x] 90-Day roadmap phase cards, content calendar table
 - [x] Wire Print/PDF button in ReportViewer to open PrintReport.tsx in a new window and trigger window.print()
 - [x] Add print stylesheet: page-break-before on modules, page-break-inside: avoid on cards/tables
+
+## Six Platform Fixes (v14)
+- [ ] Fix PrintReport: pass real audit data from ReportViewer/SavedReportViewer into PDF template
+- [ ] Restrict unlimited plan to frankb4435@gmail.com; seed/auto-promote that email to admin+unlimited on login
+- [ ] Enforce free plan 1-audit limit: block New Audit if user has ≥1 audit and is on free plan
+- [ ] Require sign-in to start any audit (gate the audit form behind auth)
+- [ ] Lock Quality Control page to frankb4435@gmail.com only (not just role=admin)
+- [ ] Enforce full sign-out: clear all cookies/session on logout, redirect to home
+- [ ] Move dark mode toggle from sidebar footer to Profile page
+- [ ] Add user dropdown in top-right header with avatar, name, and Sign Out option
+- [ ] Remove dark mode toggle and sign-out button from sidebar footer

@@ -9,6 +9,8 @@ export const ENV = {
   // Owner info
   ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
   ownerName: process.env.OWNER_NAME ?? "",
+  // Admin / unlimited email — this account gets unlimited audits and admin access
+  adminEmail: process.env.ADMIN_EMAIL ?? "frankb4435@gmail.com",
   // OAuth / session
   oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? "",
   appId: process.env.VITE_APP_ID ?? "",

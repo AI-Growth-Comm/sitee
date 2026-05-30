@@ -3,6 +3,9 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { audits, auditReviews, checklistProgress, reports, InsertUser, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
+// Email that always gets admin role and unlimited plan
+const ADMIN_EMAIL = ENV.adminEmail;
+
 let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
@@ -35,8 +38,17 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     };
     textFields.forEach(assignNullable);
     if (user.lastSignedIn !== undefined) { values.lastSignedIn = user.lastSignedIn; updateSet.lastSignedIn = user.lastSignedIn; }
-    if (user.role !== undefined) { values.role = user.role; updateSet.role = user.role; }
-    else if (user.openId === ENV.ownerOpenId) { values.role = "admin"; updateSet.role = "admin"; }
+    // Auto-promote the admin email to admin role + unlimited plan on every login
+    const isAdminEmail = user.email === ADMIN_EMAIL;
+    if (isAdminEmail) {
+      values.role = "admin"; updateSet.role = "admin";
+      values.plan = "agency"; updateSet.plan = "agency";
+      values.auditsLimit = 999999; updateSet.auditsLimit = 999999;
+    } else if (user.role !== undefined) {
+      values.role = user.role; updateSet.role = user.role;
+    } else if (user.openId === ENV.ownerOpenId) {
+      values.role = "admin"; updateSet.role = "admin";
+    }
     if (!values.lastSignedIn) values.lastSignedIn = new Date();
     if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
     await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });

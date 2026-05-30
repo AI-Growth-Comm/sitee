@@ -935,9 +935,11 @@ export default function PrintReport() {
     { enabled: !!savedReportId }
   );
 
-  const audit = auditData ?? reportData?.audit;
-  const reportTitle = reportData?.report?.title ?? "Strategic SEO Audit Report";
-  const clientName = reportData?.report?.clientName ?? "";
+  // audit.get returns { isTeaser, audit, checklistDoneMap } — unwrap the audit field
+  const auditFromQuery = auditData && !auditData.isTeaser ? (auditData as any).audit : null;
+  const audit = auditFromQuery ?? reportData?.audit;
+  const reportTitle = reportData?.report?.title ?? (audit ? `SEO Audit Report — ${(audit as any).url ?? ""}` : "Strategic SEO Audit Report");
+  const clientName = reportData?.report?.clientName ?? (audit as any)?.customIndustry ?? "";
 
   useEffect(() => {
     if (!audit || triggered.current) return;

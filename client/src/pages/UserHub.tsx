@@ -11,6 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -36,6 +43,7 @@ import {
   ShieldCheck,
   Trash2,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { INDUSTRIES } from "@shared/auditTypes";
@@ -510,6 +518,7 @@ function ReportsSection({ reports, onNavigate, onNewAudit }: { reports: DashRepo
 function ProfileSection({ data }: { data: DashData }) {
   const pct = Math.round((data.auditsUsed / data.auditsLimit) * 100);
   const barColor = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-primary";
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="space-y-6 max-w-lg">
@@ -524,6 +533,31 @@ function ProfileSection({ data }: { data: DashData }) {
             <p className="font-semibold text-foreground">{data.user?.name ?? "User"}</p>
             <p className="text-sm text-muted-foreground">{data.user?.email ?? ""}</p>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-xl p-6">
+        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Appearance</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {theme === "dark" ? <Moon className="w-4 h-4 text-primary" /> : <Sun className="w-4 h-4 text-primary" />}
+            <div>
+              <p className="text-sm font-medium text-foreground">{theme === "dark" ? "Dark mode" : "Light mode"}</p>
+              <p className="text-xs text-muted-foreground">Toggle between light and dark theme</p>
+            </div>
+          </div>
+          <button
+            onClick={toggleTheme}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+              theme === "dark" ? "bg-primary" : "bg-muted"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                theme === "dark" ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
         </div>
       </div>
 
@@ -671,8 +705,8 @@ export default function UserDashboard() {
               <TooltipContent side="right">{item.tooltip}</TooltipContent>
             </Tooltip>
           ))}
-          {/* Admin-only: Quality Control */}
-          {user?.role === "admin" && (
+          {/* Admin-only: Quality Control — restricted to frankb4435@gmail.com only */}
+          {user?.role === "admin" && user?.email === "frankb4435@gmail.com" && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -692,33 +726,8 @@ export default function UserDashboard() {
           )}
         </nav>
 
-        {/* Bottom: theme + logout */}
-        <div className="border-t border-border p-2 space-y-0.5">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={toggleTheme}
-                className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors ${!sidebarOpen ? "justify-center" : ""}`}
-              >
-                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                {sidebarOpen && <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Toggle between light and dark mode</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => logoutMutation.mutate()}
-                className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors ${!sidebarOpen ? "justify-center" : ""}`}
-              >
-                <LogOut className="w-4 h-4" />
-                {sidebarOpen && <span>Sign out</span>}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Sign out of your account</TooltipContent>
-          </Tooltip>
-        </div>
+        {/* Bottom: sidebar collapse toggle only */}
+        <div className="border-t border-border p-2" />
       </aside>
 
       {/* ── Main content ── */}
@@ -742,12 +751,34 @@ export default function UserDashboard() {
             <Plus className="w-3.5 h-3.5" /> New Audit
           </Button>
           {user && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="w-7 h-7 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center">
-                <User className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <span className="hidden sm:block truncate max-w-[120px]">{user.name ?? user.email}</span>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg px-2 py-1 hover:bg-muted/60">
+                  <div className="w-7 h-7 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center">
+                    <User className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <span className="hidden sm:block truncate max-w-[120px]">{user.name ?? user.email}</span>
+                  <ChevronDown className="w-3.5 h-3.5 hidden sm:block" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <div className="px-2 py-1.5">
+                  <p className="text-xs font-medium text-foreground truncate">{user.name ?? "User"}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email ?? ""}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => { setInlineView(null); setActiveSection("profile"); }}>
+                  <User className="w-3.5 h-3.5 mr-2" /> Profile
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
+                  onClick={() => logoutMutation.mutate()}
+                >
+                  <LogOut className="w-3.5 h-3.5 mr-2" /> Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </header>
 
@@ -785,7 +816,7 @@ export default function UserDashboard() {
                 {activeSection === "history"   && <HistorySection audits={data.allAudits ?? data.recentAudits} reports={data.savedReports} onNavigate={handleNavigate} onNewAudit={() => setActiveSection("new-audit")} />}
                 {activeSection === "reports"   && <HistorySection audits={data.allAudits ?? data.recentAudits} reports={data.savedReports} onNavigate={handleNavigate} onNewAudit={() => setActiveSection("new-audit")} defaultTab="reports" />}
                 {activeSection === "profile"   && <ProfileSection data={data} />}
-                {activeSection === "quality"   && user?.role === "admin" && <AuditQualityPanel />}
+                {activeSection === "quality" && user?.role === "admin" && user?.email === "frankb4435@gmail.com" && <AuditQualityPanel />}
               </>
             )}
           </div>
