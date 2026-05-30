@@ -988,73 +988,76 @@ export default function ReportViewer({ embeddedId, onBack }: { embeddedId?: numb
   ] as const;
 
   return (
-    <div className={embedded ? "" : "min-h-screen bg-background"}>
-      {/* Top Nav */}
-      <div className={`${embedded ? "" : "sticky top-0 z-50"} bg-background/95 backdrop-blur border-b border-border print:hidden`}>
-        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => embedded ? onBack?.() : navigate(`/audit/${auditId}`)} className="gap-2 border-primary/30 text-primary hover:bg-primary/10">
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">{embedded ? "Back to Results" : "Back to Results"}</span>
+    <div className={embedded ? "" : "min-h-screen bg-muted/30"}>
+      {/* Top Bar — matches screenshot: breadcrumb + action buttons */}
+      <div className={`${embedded ? "" : "sticky top-0 z-50"} bg-background border-b border-border print:hidden shadow-sm`}>
+        <div className="max-w-screen-xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
+          {/* Left: breadcrumb */}
+          <div className="flex items-center gap-2 min-w-0">
+            <Button variant="ghost" size="sm" onClick={() => embedded ? onBack?.() : navigate(`/audit/${auditId}`)} className="gap-1.5 text-primary hover:text-primary hover:bg-primary/10 font-medium text-sm shrink-0">
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back to Results
             </Button>
-            <Separator orientation="vertical" className="h-5" />
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded bg-primary flex items-center justify-center shrink-0">
-                <FileText className="w-3 h-3 text-primary-foreground" />
+            <span className="text-muted-foreground/50 text-sm">|</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div className="w-5 h-5 rounded bg-primary/15 flex items-center justify-center shrink-0">
+                <FileText className="w-3 h-3 text-primary" />
               </div>
-              <span className="font-semibold text-sm text-foreground hidden sm:block">SEO Report</span>
-              <span className="text-xs text-muted-foreground hidden md:block truncate max-w-[200px]">— {audit.url.replace(/^https?:\/\//, "")}</span>
+              <span className="font-semibold text-sm text-foreground">SEO Report</span>
+              <span className="text-muted-foreground text-xs hidden sm:block">—</span>
+              <span className="text-xs text-primary/80 font-medium hidden sm:block truncate max-w-[220px]">{audit.url.replace(/^https?:\/\//, "")}</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          {/* Right: action buttons */}
+          <div className="flex items-center gap-1.5 shrink-0">
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleTheme}
-              className="w-9 h-9 p-0 text-muted-foreground hover:text-foreground print:hidden"
+              className="w-8 h-8 p-0 text-muted-foreground hover:text-foreground print:hidden"
               title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
-            <Button variant="outline" size="sm" className="gap-2 print:hidden"
+            <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs print:hidden"
               onClick={() => window.print()}>
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Print / PDF</span>
+              <Download className="w-3.5 h-3.5" />
+              Print / PDF
             </Button>
             {isAuthenticated && (
-              <>
-                <SaveReportDialog auditId={auditId} auditUrl={audit.url} />
-                <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="gap-2 text-muted-foreground hover:text-foreground hidden md:flex">
-                  <BookOpen className="w-4 h-4" />
-                  <span className="hidden lg:inline">Dashboard</span>
-                </Button>
-              </>
+              <SaveReportDialog auditId={auditId} auditUrl={audit.url} />
             )}
-            <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate(`/audit/${auditId}`)}>
-              <ExternalLink className="w-4 h-4" />
-              <span className="hidden sm:inline">Dashboard</span>
+            <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={() => navigate("/dashboard")}>
+              <BookOpen className="w-3.5 h-3.5" />
+              Dashboard
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 print:px-8 print:py-4">
-        <div className="flex gap-6 print:block">
-          {/* Sidebar Nav */}
-          <div className="w-56 flex-shrink-0 print:hidden">
-            <div className="sticky top-20 space-y-1">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-3">Report Sections</p>
-              {navItems.map(({ id, label, icon: Icon }) => (
-                <button key={id} onClick={() => setActiveSection(id)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${
-                    activeSection === id
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  }`}>
-                  <Icon className="w-4 h-4 flex-shrink-0" />
-                  <span className="leading-tight">{label}</span>
-                </button>
-              ))}
+      <div className="max-w-screen-xl mx-auto px-4 py-6 print:px-8 print:py-4">
+        <div className="flex gap-5 print:block">
+          {/* Sidebar Nav — clean white card matching screenshot */}
+          <div className="w-60 flex-shrink-0 print:hidden">
+            <div className="sticky top-20">
+              <div className="bg-background rounded-xl border border-border overflow-hidden shadow-sm">
+                <div className="px-4 py-3 border-b border-border">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Report Sections</p>
+                </div>
+                <div className="p-2 space-y-0.5">
+                  {navItems.map(({ id, label, icon: Icon }) => (
+                    <button key={id} onClick={() => setActiveSection(id)}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all text-left ${
+                        activeSection === id
+                          ? "bg-primary text-primary-foreground font-medium shadow-sm"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                      }`}>
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      <span className="leading-tight">{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 

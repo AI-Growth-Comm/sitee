@@ -34,6 +34,8 @@ import {
   Search,
   AlertCircle,
   ShieldCheck,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { INDUSTRIES } from "@shared/auditTypes";
@@ -92,6 +94,7 @@ type DashData = {
   auditsUsed: number;
   auditsLimit: number;
   recentAudits: DashAudit[];
+  allAudits: DashAudit[];
   savedReports: DashReport[];
   user: DashUser | null;
 };
@@ -311,8 +314,32 @@ function OverviewSection({ data, onNavigate }: { data: DashData; onNavigate: (p:
   );
 }
 
-// ─── Audit History Section ────────────────────────────────────────────────────
-function HistorySection({ audits, onNavigate, onNewAudit }: { audits: DashAudit[]; onNavigate: (p: string) => void; onNewAudit: () => void }) {
+// // ─── Audit History Section ────────────────────────────────────────────────
+function HistorySection({ audits, reports = [], onNavigate, onNewAudit, defaultTab = "audits" }: {
+  audits: DashAudit[];
+  reports?: DashReport[];
+  onNavigate: (p: string) => void;
+  onNewAudit: () => void;
+  defaultTab?: "audits" | "reports";
+}) {
+  const [tab, setTab] = useState<"audits" | "reports">(defaultTab);
+  const utils = trpc.useUtils();
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const deleteMutation = trpc.auditDelete.delete.useMutation({
+    onMutate: ({ auditId }) => setDeletingId(auditId),
+    onSuccess: () => {
+      utils.dashboard.summary.invalidate();
+      toast.success("Audit deleted.");
+    },
+    onError: (err) => toast.error(err.message),
+    onSettled: () => setDeletingId(null),
+  });
+
+  const handleDelete = (id: number, url: string) => {
+    if (!confirm(`Delete audit for ${url.replace(/^https?:\/\//, "")}? This cannot be undone.`)) return;
+    deleteMutation.mutate({ auditId: id });
+  };
+
   if (audits.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
@@ -328,11 +355,78 @@ function HistorySection({ audits, onNavigate, onNewAudit }: { audits: DashAudit[
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-foreground">Audit History</h2>
+        <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+          <button
+            onClick={() => setTab("audits")}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+              tab === "audits" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Audit History
+          </button>
+          <button
+            onClick={() => setTab("reports")}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
+              tab === "reports" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Saved Reports {reports.length > 0 && <span className="ml-1 text-xs text-muted-foreground">({reports.length})</span>}
+          </button>
+        </div>
         <Button onClick={onNewAudit} size="sm" className="gap-1.5 bg-primary text-primary-foreground">
           <Plus className="w-3.5 h-3.5" /> New Audit
         </Button>
       </div>
+
+      {/* Reports tab */}
+      {tab === "reports" && (
+        <div>
+          {reports.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+              <FileText className="w-10 h-10 text-muted-foreground/40" />
+              <p className="text-muted-foreground">No saved reports yet.</p>
+              <p className="text-xs text-muted-foreground">Open any audit result and click “Save Report” to save it here.</p>
+              <Button onClick={onNewAudit} className="gap-2 bg-primary text-primary-foreground">
+                <Plus className="w-4 h-4" /> New Audit
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {reports.map((report) => (
+                <div
+                  key={report.id}
+                  className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3 hover:border-primary/40 transition-colors cursor-pointer"
+                  onClick={() => onNavigate(`/report/${report.id}`)}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {new Date(report.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground text-sm line-clamp-2">{report.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{report.clientName}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-1.5 text-xs mt-auto"
+                    onClick={(e) => { e.stopPropagation(); onNavigate(`/report/${report.id}`); }}
+                  >
+                    <ExternalLink className="w-3 h-3" /> View Report
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Audits tab */}
+      {tab === "audits" && (
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -367,7 +461,7 @@ function HistorySection({ audits, onNavigate, onNewAudit }: { audits: DashAudit[
                     {new Date(audit.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1">
                       {audit.status !== "failed" && (
                         <>
                           <Button variant="ghost" size="sm" onClick={() => onNavigate(`/audit/${audit.id}`)} className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground">
@@ -378,6 +472,18 @@ function HistorySection({ audits, onNavigate, onNewAudit }: { audits: DashAudit[
                           </Button>
                         </>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(audit.id, audit.url)}
+                        disabled={deletingId === audit.id}
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                        title="Delete audit"
+                      >
+                        {deletingId === audit.id
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <Trash2 className="w-3.5 h-3.5" />}
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -386,64 +492,15 @@ function HistorySection({ audits, onNavigate, onNewAudit }: { audits: DashAudit[
           </table>
         </div>
       </div>
+      )}
     </div>
   );
 }
 
 // ─── Reports Section ──────────────────────────────────────────────────────────
+// Reports section is now merged into HistorySection as a tab — see below
 function ReportsSection({ reports, onNavigate, onNewAudit }: { reports: DashReport[]; onNavigate: (p: string) => void; onNewAudit: () => void }) {
-  if (reports.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-        <FileText className="w-10 h-10 text-muted-foreground/40" />
-        <p className="text-muted-foreground">No saved reports yet. Generate a report from any completed audit.</p>
-        <Button onClick={onNewAudit} className="gap-2 bg-primary text-primary-foreground">
-          <Plus className="w-4 h-4" /> New Audit
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-foreground">Saved Reports</h2>
-        <Button variant="outline" size="sm" onClick={() => onNavigate("/reports")} className="gap-1.5 text-xs">
-          View All
-        </Button>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {reports.map((report) => (
-          <div
-            key={report.id}
-            className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3 hover:border-primary/40 transition-colors cursor-pointer"
-            onClick={() => onNavigate(`/report/${report.id}`)}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                <FileText className="w-4 h-4 text-primary" />
-              </div>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {new Date(report.createdAt).toLocaleDateString()}
-              </span>
-            </div>
-            <div>
-              <p className="font-semibold text-foreground text-sm line-clamp-2">{report.title}</p>
-              <p className="text-xs text-muted-foreground mt-1">{report.clientName}</p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full gap-1.5 text-xs mt-auto"
-              onClick={(e) => { e.stopPropagation(); onNavigate(`/report/${report.id}`); }}
-            >
-              <ExternalLink className="w-3 h-3" /> View Report
-            </Button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  return <HistorySection audits={[]} reports={reports} onNavigate={onNavigate} onNewAudit={onNewAudit} defaultTab="reports" />;
 }
 
 // ─── Profile Section ──────────────────────────────────────────────────────────
@@ -541,6 +598,7 @@ export default function UserDashboard() {
         auditsUsed: rawData.auditsUsed,
         auditsLimit: rawData.auditsLimit,
         recentAudits: ((rawData.allAudits ?? rawData.recentAudits) as DashAudit[]) ?? [],
+        allAudits: ((rawData.allAudits) as DashAudit[]) ?? ((rawData.recentAudits) as DashAudit[]) ?? [],
         savedReports: ((rawData.allReports ?? rawData.savedReports) as DashReport[]) ?? [],
         user: rawData.user ? { name: rawData.user.name ?? null, email: rawData.user.email ?? null } : null,
       }
@@ -721,8 +779,8 @@ export default function UserDashboard() {
               <>
                 {activeSection === "overview"  && <OverviewSection data={data} onNavigate={handleNavigate} />}
                 {activeSection === "new-audit" && <NewAuditPanel onAuditComplete={handleNewAuditComplete} />}
-                {activeSection === "history"   && <HistorySection audits={data.recentAudits} onNavigate={handleNavigate} onNewAudit={() => setActiveSection("new-audit")} />}
-                {activeSection === "reports"   && <ReportsSection reports={data.savedReports} onNavigate={handleNavigate} onNewAudit={() => setActiveSection("new-audit")} />}
+                {activeSection === "history"   && <HistorySection audits={data.allAudits ?? data.recentAudits} reports={data.savedReports} onNavigate={handleNavigate} onNewAudit={() => setActiveSection("new-audit")} />}
+                {activeSection === "reports"   && <HistorySection audits={data.allAudits ?? data.recentAudits} reports={data.savedReports} onNavigate={handleNavigate} onNewAudit={() => setActiveSection("new-audit")} defaultTab="reports" />}
                 {activeSection === "profile"   && <ProfileSection data={data} />}
                 {activeSection === "quality"   && user?.role === "admin" && <AuditQualityPanel />}
               </>

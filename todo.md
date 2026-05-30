@@ -219,3 +219,26 @@
 - [x] Update AuditDashboard History tab: pass current audit URL, filter list to same domain only
 - [x] Show "X audits for this domain" count at top of History tab
 - [x] Normalize domain comparison (strip www., protocol, trailing slash)
+
+## Quality Control AI Analysis (v12)
+- [ ] Add quality.analyzeAccuracy tRPC mutation: send audit data + scraped context to LLM, get section-by-section accuracy verdict with reasoning
+- [ ] Update AuditQualityPanel: "Run AI Analysis" button that calls the mutation and shows AI verdict per section
+- [ ] Show overall AI-computed accuracy score and summary in the panel
+- [ ] Display AI reasoning text per section (why it rated accurate/partial/inaccurate)
+
+## Audit History Delete Button (v12)
+- [ ] Add audit.delete tRPC mutation (protected, owner-only, soft or hard delete)
+- [ ] Add delete icon button to each row in HistorySection (UserHub) and HistoryTab (AuditDashboard)
+- [ ] Confirm before delete (inline confirm or toast with undo)
+- [ ] Remove deleted audit from list optimistically
+
+## SEO Report Page Redesign (v12)
+- [ ] Redesign ReportViewer to match screenshot: left sidebar with module nav, top breadcrumb bar with Print/Save/Dashboard actions, clean white card layout
+- [ ] Left sidebar: Cover & Scorecard, Module 1: Content Audit, Module 2: Metadata, Module 3: Internal Linking, Module 4: Action Roadmap
+- [ ] Top bar: Back to Results, site URL, theme toggle, Print/PDF, Save Report, Dashboard buttons
+- [ ] Module content: clean section headers with icons, tables with proper borders, keyword badges
+
+## Reports + Audit Unification (v12)
+- [ ] Merge Reports nav item into Audit History: each history row gets a "View Report" button if a saved report exists
+- [ ] Remove standalone Reports section from sidebar (or keep as shortcut to saved reports list)
+- [ ] Ensure "Save Report" from ReportViewer updates the history row badge

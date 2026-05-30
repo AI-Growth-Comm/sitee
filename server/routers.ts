@@ -336,6 +336,90 @@ export const appRouter = router({
       if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
       return listAuditReviews(50);
     }),
+
+    // AI-powered section-by-section accuracy analysis
+    analyzeAccuracy: protectedProcedure
+      .input(z.object({ auditId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        const audit = await getAuditById(input.auditId);
+        if (!audit) throw new TRPCError({ code: "NOT_FOUND", message: "Audit not found" });
+
+        const siteContext = audit.siteContext as Record<string, unknown> | null;
+        const keywords = audit.keywords as Record<string, unknown> | null;
+        const metadata = audit.metadata as Record<string, unknown> | null;
+        const calendar = audit.calendar as Record<string, unknown> | null;
+        const checklist = audit.checklist as Record<string, unknown> | null;
+        const linking = audit.linking as Record<string, unknown> | null;
+        const overview = audit.overview as Record<string, unknown> | null;
+        const contentAudit = audit.contentAudit as Record<string, unknown> | null;
+        const roadmap = audit.roadmap as Record<string, unknown> | null;
+
+        const contextSummary = siteContext
+          ? `SCRAPED SITE DATA:\n- Title: ${(siteContext as any).title ?? "N/A"}\n- Meta Description: ${(siteContext as any).metaDescription ?? "N/A"}\n- H1: ${(siteContext as any).h1 ?? "N/A"}\n- H2s: ${((siteContext as any).h2s ?? []).slice(0, 5).join(", ")}\n- Body text excerpt: ${((siteContext as any).bodyText ?? "").slice(0, 600)}\n- Pages found: ${((siteContext as any).pages ?? []).map((p: any) => p.url).join(", ")}\n- Scrape error: ${(siteContext as any).scrapeError ?? "none"}`
+          : "No scraped site data available.";
+
+        const auditSummary = JSON.stringify({
+          url: audit.url,
+          industry: audit.industry,
+          overallScore: audit.overallScore,
+          keywords: keywords ? { topKeywords: (keywords as any).topKeywords?.slice(0, 5) } : null,
+          metadata: metadata ? { pages: (metadata as any).pages?.slice(0, 3) } : null,
+          calendar: calendar ? { strategy: (calendar as any).strategy, itemCount: (calendar as any).items?.length } : null,
+          checklist: checklist ? { itemCount: (checklist as any).items?.length } : null,
+          linking: linking ? { totalLinks: (linking as any).totalInternalLinks } : null,
+          overview: overview ? { summary: (overview as any).summary } : null,
+          contentAudit: contentAudit ? { executiveSummary: (contentAudit as any).executiveSummary } : null,
+          roadmap: roadmap ? { phase1Count: (roadmap as any).phase1?.length } : null,
+        }, null, 2);
+
+        const { invokeLLM } = await import("./_core/llm");
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `You are an SEO audit quality analyst. You will be given scraped data from a website and the AI-generated audit results. Your job is to evaluate whether each section of the audit is accurate, partially accurate, or inaccurate based on the actual site data. Be specific and cite evidence from the scraped data. Respond ONLY with valid JSON matching the schema exactly.`,
+            },
+            {
+              role: "user",
+              content: `Evaluate the accuracy of this SEO audit.\n\n${contextSummary}\n\nAUDIT OUTPUT:\n${auditSummary}\n\nReturn JSON with this exact structure:\n{\n  "overallAccuracy": <number 0-100>,\n  "overallSummary": "<2-3 sentence overall assessment>",\n  "sections": {\n    "keywords": { "rating": "accurate|partial|inaccurate", "reasoning": "<specific evidence>" },\n    "metadata": { "rating": "accurate|partial|inaccurate", "reasoning": "<specific evidence>" },\n    "calendar": { "rating": "accurate|partial|inaccurate", "reasoning": "<specific evidence>" },\n    "checklist": { "rating": "accurate|partial|inaccurate", "reasoning": "<specific evidence>" },\n    "linking": { "rating": "accurate|partial|inaccurate", "reasoning": "<specific evidence>" },\n    "overview": { "rating": "accurate|partial|inaccurate", "reasoning": "<specific evidence>" },\n    "contentAudit": { "rating": "accurate|partial|inaccurate", "reasoning": "<specific evidence>" },\n    "roadmap": { "rating": "accurate|partial|inaccurate", "reasoning": "<specific evidence>" }\n  }\n}`,
+            },
+          ],
+        });
+
+        const raw = response.choices?.[0]?.message?.content ?? "{}";
+        let analysis: Record<string, unknown>;
+        try {
+          // Strip markdown code fences if present
+          const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
+          analysis = JSON.parse(cleaned);
+        } catch {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI returned invalid JSON. Try again." });
+        }
+        return analysis as {
+          overallAccuracy: number;
+          overallSummary: string;
+          sections: Record<string, { rating: string; reasoning: string }>;
+        };
+      }),
+  }),
+
+  // ─── Audit delete ────────────────────────────────────────────────────────────
+  auditDelete: router({
+    delete: protectedProcedure
+      .input(z.object({ auditId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        const { getDb } = await import("./db");
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const { audits: auditsTable } = await import("../drizzle/schema");
+        const { eq, and } = await import("drizzle-orm");
+        // Only allow deleting own audits
+        await db.delete(auditsTable).where(
+          and(eq(auditsTable.id, input.auditId), eq(auditsTable.userId, ctx.user.id))
+        );
+        return { success: true };
+      }),
   }),
 
   // ─── Dashboard (user dashboard) ─────────────────────────────────────────────────────

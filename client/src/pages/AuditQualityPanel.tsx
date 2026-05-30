@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
+import { Loader2, Sparkles, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -250,9 +251,43 @@ function SiteContextViewer({ siteContext }: { siteContext: any }) {
 
 // ─── Review Form ──────────────────────────────────────────────────────────────
 
+type AIAnalysis = {
+  overallAccuracy: number;
+  overallSummary: string;
+  sections: Record<string, { rating: string; reasoning: string }>;
+};
+
+const RATING_ICON: Record<string, React.ReactNode> = {
+  accurate: <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />,
+  partial: <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />,
+  inaccurate: <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />,
+};
+
+const RATING_BG: Record<string, string> = {
+  accurate: "border-emerald-500/30 bg-emerald-500/5",
+  partial: "border-amber-500/30 bg-amber-500/5",
+  inaccurate: "border-red-500/30 bg-red-500/5",
+};
+
 function AuditReviewForm({ auditId, onBack }: { auditId: number; onBack: () => void }) {
   const { data, isLoading } = trpc.quality.getAuditForReview.useQuery({ auditId });
   const utils = trpc.useUtils();
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
+
+  const analyzeAccuracy = trpc.quality.analyzeAccuracy.useMutation({
+    onSuccess: (result) => {
+      setAiAnalysis(result);
+      // Auto-populate section flags from AI result
+      const newFlags: SectionFlags = {};
+      for (const [key, val] of Object.entries(result.sections)) {
+        newFlags[key] = { rating: val.rating as Rating, notes: val.reasoning };
+      }
+      setFlags(newFlags);
+      setAccuracy(result.overallAccuracy);
+      toast.success("AI analysis complete — sections pre-filled from AI verdict.");
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   const [flags, setFlags] = useState<SectionFlags>(() =>
     Object.fromEntries(SECTIONS.map((s) => [s.key, { rating: "partial" as Rating, notes: "" }]))
@@ -328,10 +363,63 @@ function AuditReviewForm({ auditId, onBack }: { auditId: number; onBack: () => v
             {review && <span className="ml-2 text-emerald-400">· Previously reviewed</span>}
           </p>
         </div>
-        <Button onClick={handleSubmit} disabled={submitReview.isPending} className="flex-shrink-0">
-          {submitReview.isPending ? "Saving..." : review ? "Update Review" : "Save Review"}
-        </Button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button
+            variant="outline"
+            onClick={() => analyzeAccuracy.mutate({ auditId })}
+            disabled={analyzeAccuracy.isPending}
+            className="gap-2 border-primary/40 text-primary hover:bg-primary/10"
+          >
+            {analyzeAccuracy.isPending ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</>
+            ) : (
+              <><Sparkles className="w-4 h-4" /> Run AI Analysis</>
+            )}
+          </Button>
+          <Button onClick={handleSubmit} disabled={submitReview.isPending}>
+            {submitReview.isPending ? "Saving..." : review ? "Update Review" : "Save Review"}
+          </Button>
+        </div>
       </div>
+
+      {/* AI Analysis Result */}
+      {aiAnalysis && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              AI Accuracy Analysis
+              <span className={`ml-auto text-2xl font-bold ${
+                aiAnalysis.overallAccuracy >= 70 ? "text-emerald-400" :
+                aiAnalysis.overallAccuracy >= 40 ? "text-amber-400" : "text-red-400"
+              }`}>{aiAnalysis.overallAccuracy}%</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-foreground/90 leading-relaxed">{aiAnalysis.overallSummary}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {SECTIONS.map((sec) => {
+                const result = aiAnalysis.sections[sec.key];
+                if (!result) return null;
+                return (
+                  <div key={sec.key} className={`p-3 rounded-lg border ${RATING_BG[result.rating] ?? "border-border bg-muted/20"}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      {RATING_ICON[result.rating]}
+                      <span className="text-xs font-semibold text-foreground">{sec.icon} {sec.label}</span>
+                      <span className={`ml-auto text-xs font-medium capitalize ${
+                        result.rating === "accurate" ? "text-emerald-400" :
+                        result.rating === "partial" ? "text-amber-400" : "text-red-400"
+                      }`}>{result.rating}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{result.reasoning}</p>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground italic">AI analysis has been applied to the section ratings below. Review and adjust before saving.</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Site Context */}
       <SiteContextViewer siteContext={(audit as any).siteContext} />
