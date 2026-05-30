@@ -244,24 +244,24 @@
 - [x] Save Report invalidates dashboard cache so Reports tab reflects new saves
 
 ## Self-Improving Audit Quality System (v13)
-- [ ] Add auditCriteria table: id, domain, sectionName, issueType, description, severity, learnedFrom (auditId), createdAt
-- [ ] Add qualityInsights table: id, auditId, sectionName, verdict, reasoning, suggestedFix, appliedAt
-- [ ] Run db:push for new tables
-- [ ] Auto-trigger quality analysis after every audit completes (post-audit hook in audit.run)
-- [ ] Extract failure patterns from analysis: store per-section issues in auditCriteria table
-- [ ] Flag known issues in future audits: before LLM calls, query auditCriteria for same domain and inject as "known issues to avoid" context
-- [ ] Add quality.getInsights tRPC query: return learned criteria for a domain
-- [ ] Show "Known Issues Applied" badge on audit dashboard when prior criteria were injected
-- [ ] Add quality.getCriteriaForDomain tRPC query: admin view of all learned criteria
-- [ ] Show learned criteria list in Quality Control panel with ability to dismiss/delete entries
+- [x] Add auditCriteria table: id, domain, sectionName, issueType, description, severity, learnedFrom (auditId), createdAt
+- [x] Add qualityInsights table: id, auditId, sectionResults (JSON), overallAccuracy, overallSummary, criteriaExtracted, createdAt
+- [x] Run db:push for new tables (auditCriteria + qualityInsights)
+- [x] Auto-trigger quality analysis after every audit completes (post-audit hook in audit.run via qualityLearningEngine.ts)
+- [x] Extract failure patterns from analysis: store per-section issues in auditCriteria table
+- [x] Flag known issues in future audits: before LLM calls, query auditCriteria for same domain and inject as "known issues to avoid" context
+- [x] Add quality.getInsights tRPC query: return auto-generated insight for a specific auditId
+- [x] Show AutoInsightsBanner in Quality Control review form showing auto-analysis results
+- [x] Add quality.getCriteriaForDomain tRPC query: admin view of all learned criteria for a domain
+- [x] Show learned criteria list in Quality Control panel (Learned Criteria tab) with dismiss button
 
 ## Professional PDF Report Template (v13)
-- [ ] Build PrintReport.tsx: self-contained print view with @page CSS, cover page, TOC, scorecard, 4 modules
-- [ ] Cover page: Sitemizer logo, report title, client URL, industry, generation date, maturity level
-- [ ] Running header/footer with CSS counters (Page X of Y), brand notice
-- [ ] SVG semi-circular gauge for overall score
-- [ ] CSS horizontal progress bars for 7 dimension scores
-- [ ] Pure CSS/SVG keyword tier tables, metadata comparison, internal linking map
-- [ ] 90-Day roadmap phase cards, KPI table
-- [ ] Wire Print/PDF button in ReportViewer to open PrintReport.tsx in a new window and trigger window.print()
-- [ ] Add print stylesheet: page-break-before on modules, page-break-inside: avoid on cards/tables
+- [x] Build PrintReport.tsx: self-contained print view with @page CSS, cover page, TOC, scorecard, 4 modules
+- [x] Cover page: Sitemizer logo, report title, client URL, industry, generation date, maturity level
+- [x] Running header/footer with CSS counters (Page X of Y), brand notice
+- [x] SVG semi-circular gauge for overall score
+- [x] CSS horizontal progress bars for 7 dimension scores
+- [x] Pure CSS/SVG keyword tier tables, metadata comparison, internal linking map
+- [x] 90-Day roadmap phase cards, content calendar table
+- [x] Wire Print/PDF button in ReportViewer to open PrintReport.tsx in a new window and trigger window.print()
+- [x] Add print stylesheet: page-break-before on modules, page-break-inside: avoid on cards/tables

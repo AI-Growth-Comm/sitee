@@ -119,7 +119,7 @@ export const appRouter = router({
             }
           });
 
-          return { auditId, overallScore: result.overallScore };
+          return { auditId, overallScore: result.overallScore, criteriaApplied: knownCriteria.length };
         } catch (err) {
           const msg = err instanceof Error ? err.message : "Unknown error";
           await updateAuditStatus(auditId, "failed", msg);

@@ -138,6 +138,9 @@ function NewAuditPanel({ onAuditComplete }: { onAuditComplete: (auditId: number)
   const runAudit = trpc.audit.run.useMutation({
     onSuccess: (data) => {
       setLoading(false);
+      if ((data as any).criteriaApplied > 0) {
+        toast.success(`✨ Known Issues Applied: ${(data as any).criteriaApplied} learned criteria from previous audits were injected into this run.`, { duration: 6000 });
+      }
       if (isAuthenticated) {
         onAuditComplete(data.auditId);
       } else {
