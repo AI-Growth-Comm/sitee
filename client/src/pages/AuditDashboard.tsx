@@ -12,7 +12,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import {
   ArrowLeft, Zap, Copy, Check, Download, RotateCcw,
   ChevronDown, ChevronUp, ExternalLink, Link2, AlertCircle,
-  Moon, Sun, FileText, BookOpen
+  Moon, Sun, FileText, BookOpen, Trash2, Loader2
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import type {
@@ -624,6 +624,22 @@ function LinkingTab({ linking }: { linking: InternalLinking }) {
 // ─── History Tab ──────────────────────────────────────────────────────────────
 function HistoryTab({ onRerun, currentUrl }: { onRerun: (url: string, industry: string, customIndustry?: string | null) => void; currentUrl: string }) {
   const { isAuthenticated } = useAuth();
+  const utils = trpc.useUtils();
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const deleteMutation = trpc.auditDelete.delete.useMutation({
+    onMutate: ({ auditId }) => setDeletingId(auditId),
+    onSuccess: () => {
+      utils.audit.listByDomain.invalidate();
+      utils.audit.domainStats.invalidate();
+      toast.success("Audit deleted");
+    },
+    onError: (err) => toast.error(err.message ?? "Failed to delete"),
+    onSettled: () => setDeletingId(null),
+  });
+  const handleDelete = (id: number, url: string) => {
+    if (!confirm(`Delete audit for ${url.replace(/^https?:\/\//, "")}?`)) return;
+    deleteMutation.mutate({ auditId: id });
+  };
   // Use domain-scoped query when we have a URL, fall back to full list
   const domainHistory = trpc.audit.listByDomain.useQuery(
     { url: currentUrl },
@@ -734,6 +750,16 @@ function HistoryTab({ onRerun, currentUrl }: { onRerun: (url: string, industry: 
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 Re-run
+              </button>
+              <button
+                onClick={() => handleDelete(audit.id, audit.url)}
+                disabled={deletingId === audit.id}
+                className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors border border-border hover:border-red-500/30 disabled:opacity-50"
+                title="Delete audit"
+              >
+                {deletingId === audit.id
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  : <Trash2 className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>

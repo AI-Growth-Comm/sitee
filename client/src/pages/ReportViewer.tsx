@@ -882,6 +882,7 @@ function SaveReportDialog({ auditId, auditUrl }: { auditId: number; auditUrl: st
       toast.success("Report saved successfully!");
       setOpen(false);
       utils.report.list.invalidate();
+      utils.dashboard.summary.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
