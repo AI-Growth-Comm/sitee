@@ -142,7 +142,7 @@ export default function AuditTeaser() {
           <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
             <Zap className="w-3.5 h-3.5 text-primary-foreground" />
           </div>
-          <span className="font-bold text-foreground">Sitee</span>
+          <span className="font-bold text-foreground">Sitemizer</span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm text-muted-foreground truncate">

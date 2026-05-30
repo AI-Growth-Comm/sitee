@@ -258,7 +258,7 @@ function OverviewSection({ data, onNavigate }: { data: DashData; onNavigate: (p:
         <h2 className="text-xl font-semibold text-foreground mb-1">
           Welcome back{data.user?.name ? `, ${data.user.name.split(" ")[0]}` : ""}
         </h2>
-        <p className="text-sm text-muted-foreground">Here is a summary of your Sitee activity.</p>
+        <p className="text-sm text-muted-foreground">Here is a summary of your Sitemizer activity.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -576,7 +576,7 @@ export default function UserDashboard() {
         <div className={`flex items-center h-14 border-b border-border px-3 gap-2 ${sidebarOpen ? "justify-between" : "justify-center"}`}>
           {sidebarOpen && (
             <div className="flex items-center gap-2 min-w-0">
-              <img src="/manus-storage/sitee-logo_7a495881.png" alt="Sitee" className="h-6 w-auto" />
+              <img src="/manus-storage/sitemizer-logo-cropped_8c43585e.png" alt="Sitemizer" className="h-6 w-auto" />
             </div>
           )}
           <button

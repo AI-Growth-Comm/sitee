@@ -209,7 +209,7 @@ export default function Home() {
       <header className="border-b border-border/50 px-6 py-4">
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/manus-storage/sitee-logo_7a495881.png" alt="Sitee" className="h-8 w-auto" />
+            <img src="/manus-storage/sitemizer-logo-cropped_8c43585e.png" alt="Sitemizer" className="h-8 w-auto" />
             <Badge variant="secondary" className="text-xs hidden sm:inline-flex">AI-Powered SEO</Badge>
           </div>
           <div className="flex items-center gap-2">
@@ -422,13 +422,13 @@ export default function Home() {
           </StaggerGrid>
         </FadeUp>
 
-        {/* ── Section 1: How Sitee Helps ── */}
+        {/* ── Section 1: How Sitemizer Helps ── */}
         <section className="max-w-4xl mx-auto mt-24">
           <FadeUp className="text-center mb-10">
             <span className="inline-block text-xs font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full uppercase tracking-wider mb-4">For Business Owners</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">How Sitee Helps Your Business Grow Online</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">How Sitemizer Helps Your Business Grow Online</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Whether you run a local shop, an e-commerce store, or a professional services firm, Sitee gives you the exact SEO fixes that drive more customers to your website — without hiring an agency.
+              Whether you run a local shop, an e-commerce store, or a professional services firm, Sitemizer gives you the exact SEO fixes that drive more customers to your website — without hiring an agency.
             </p>
           </FadeUp>
           <StaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -438,21 +438,21 @@ export default function Home() {
                 color: "text-blue-400",
                 bg: "bg-blue-500/10",
                 title: "Find Hidden Revenue Keywords",
-                desc: "Discover the exact search terms your ideal customers type into Google, ChatGPT, and Perplexity. Sitee maps keyword volume, competition, and buyer intent so you target terms that convert — not just traffic.",
+                desc: "Discover the exact search terms your ideal customers type into Google, ChatGPT, and Perplexity. Sitemizer maps keyword volume, competition, and buyer intent so you target terms that convert — not just traffic.",
               },
               {
                 icon: Wrench,
                 color: "text-purple-400",
                 bg: "bg-purple-500/10",
                 title: "Fix Critical SEO Problems Fast",
-                desc: "Missing meta descriptions, broken schema markup, thin content — Sitee identifies every issue and gives you copy-paste fixes. Most clients resolve their top 10 issues in under an hour.",
+                desc: "Missing meta descriptions, broken schema markup, thin content — Sitemizer identifies every issue and gives you copy-paste fixes. Most clients resolve their top 10 issues in under an hour.",
               },
               {
                 icon: BarChart3,
                 color: "text-green-400",
                 bg: "bg-green-500/10",
                 title: "Outrank Competitors in 90 Days",
-                desc: "Sitee's AI builds a 90-day content calendar tailored to your industry, filling the topical gaps your competitors haven't covered yet. Consistent publishing is the #1 driver of long-term organic growth.",
+                desc: "Sitemizer's AI builds a 90-day content calendar tailored to your industry, filling the topical gaps your competitors haven't covered yet. Consistent publishing is the #1 driver of long-term organic growth.",
               },
             ].map(({ icon: Icon, color, bg, title, desc }) => (
               <motion.div key={title} variants={cardVariant} className="bg-card border border-border rounded-xl p-6 space-y-3 hover:border-blue-500/40 transition-colors">
@@ -474,15 +474,15 @@ export default function Home() {
                 <span className="inline-block text-xs font-semibold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full uppercase tracking-wider mb-4">AEO &amp; GEO</span>
                 <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Optimize for the AI Search Era</h2>
                 <p className="text-muted-foreground max-w-2xl mx-auto">
-                  ChatGPT, Claude, Gemini, Perplexity, Grok, and Manus all crawl and index the web differently from Google. Sitee audits your site against the signals that AI answer engines actually use — so your business gets cited, not ignored.
+                  ChatGPT, Claude, Gemini, Perplexity, Grok, and Manus all crawl and index the web differently from Google. Sitemizer audits your site against the signals that AI answer engines actually use — so your business gets cited, not ignored.
                 </p>
               </FadeUp>
               <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {[
-                  { icon: Brain, label: "Answer Engine Optimization (AEO)", desc: "Structure your content so ChatGPT, Claude, and Gemini quote your site as a trusted source in their answers. Sitee checks FAQ schema, structured data, and E-E-A-T signals." },
-                  { icon: Globe, label: "Generative Engine Optimization (GEO)", desc: "Perplexity, Grok, and Manus use retrieval-augmented generation. Sitee ensures your pages have the factual density, citation-ready formatting, and topical authority these models prefer." },
-                  { icon: Cpu, label: "Google AI Overviews", desc: "Google's AI Overviews pull from pages with clear headings, concise answers, and proper schema. Sitee rewrites your metadata and adds the JSON-LD markup that earns featured placement." },
-                  { icon: Bot, label: "Bing Copilot & Microsoft AI", desc: "Bing's AI crawler rewards pages with high readability scores and structured data. Sitee's content audit flags readability issues and suggests rewrites that satisfy both human readers and AI models." },
+                  { icon: Brain, label: "Answer Engine Optimization (AEO)", desc: "Structure your content so ChatGPT, Claude, and Gemini quote your site as a trusted source in their answers. Sitemizer checks FAQ schema, structured data, and E-E-A-T signals." },
+                  { icon: Globe, label: "Generative Engine Optimization (GEO)", desc: "Perplexity, Grok, and Manus use retrieval-augmented generation. Sitemizer ensures your pages have the factual density, citation-ready formatting, and topical authority these models prefer." },
+                  { icon: Cpu, label: "Google AI Overviews", desc: "Google's AI Overviews pull from pages with clear headings, concise answers, and proper schema. Sitemizer rewrites your metadata and adds the JSON-LD markup that earns featured placement." },
+                  { icon: Bot, label: "Bing Copilot & Microsoft AI", desc: "Bing's AI crawler rewards pages with high readability scores and structured data. Sitemizer's content audit flags readability issues and suggests rewrites that satisfy both human readers and AI models." },
                 ].map(({ icon: Icon, label, desc }) => (
                   <motion.div key={label} variants={cardVariant} className="flex items-start gap-3 bg-background/60 border border-border/60 rounded-xl p-5">
                     <Icon className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
@@ -503,7 +503,7 @@ export default function Home() {
             <span className="inline-block text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-1 rounded-full uppercase tracking-wider mb-4">Common Problems</span>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">The SEO Problems Costing You Customers</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Most small business websites have the same 5 critical SEO issues. Sitee finds and fixes all of them in a single audit.
+              Most small business websites have the same 5 critical SEO issues. Sitemizer finds and fixes all of them in a single audit.
             </p>
           </FadeUp>
           <StaggerGrid className="space-y-4">
@@ -511,22 +511,22 @@ export default function Home() {
               {
                 problemIcon: AlertCircle,
                 problem: "Your site doesn't appear in Google's top 10 for your core services",
-                solution: "Sitee identifies the exact keywords you should rank for, rewrites your page titles and meta descriptions, and builds a content plan to close the gap within 90 days.",
+                solution: "Sitemizer identifies the exact keywords you should rank for, rewrites your page titles and meta descriptions, and builds a content plan to close the gap within 90 days.",
               },
               {
                 problemIcon: Bot,
                 problem: "AI assistants never mention your business when users ask relevant questions",
-                solution: "Sitee adds FAQ schema, improves your E-E-A-T signals, and restructures your content so ChatGPT, Perplexity, and Gemini can extract and cite your answers.",
+                solution: "Sitemizer adds FAQ schema, improves your E-E-A-T signals, and restructures your content so ChatGPT, Perplexity, and Gemini can extract and cite your answers.",
               },
               {
                 problemIcon: TrendingDown,
                 problem: "You updated your site but rankings didn't improve",
-                solution: "Content alone isn't enough. Sitee audits your technical SEO, internal linking structure, and schema markup — the invisible factors that determine whether Google trusts your updates.",
+                solution: "Content alone isn't enough. Sitemizer audits your technical SEO, internal linking structure, and schema markup — the invisible factors that determine whether Google trusts your updates.",
               },
               {
                 problemIcon: LayoutList,
                 problem: "You don't know which pages to fix first",
-                solution: "Sitee's prioritized action checklist ranks every fix by impact and effort, so you always work on the highest-ROI task next. No more guessing.",
+                solution: "Sitemizer's prioritized action checklist ranks every fix by impact and effort, so you always work on the highest-ROI task next. No more guessing.",
               },
             ].map(({ problemIcon: PIcon, problem, solution }) => (
               <motion.div key={problem} variants={cardVariant} className="bg-card border border-border rounded-xl p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -540,7 +540,7 @@ export default function Home() {
                 <div className="flex items-start gap-3 md:border-l md:border-border md:pl-4">
                   <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-1">Sitee Solution</p>
+                    <p className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-1">Sitemizer Solution</p>
                     <p className="text-sm text-muted-foreground leading-relaxed">{solution}</p>
                   </div>
                 </div>
@@ -555,7 +555,7 @@ export default function Home() {
             <span className="inline-block text-xs font-semibold text-green-400 bg-green-500/10 border border-green-500/20 px-3 py-1 rounded-full uppercase tracking-wider mb-4">AI Standards 2025</span>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Update Your Site Fast for the New AI Web</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Every major AI platform — Google, ChatGPT, Claude, Gemini, Perplexity, Grok, and Manus — now crawls the web with its own ranking signals. Here is exactly what each one looks for, and how Sitee helps you meet those standards.
+              Every major AI platform — Google, ChatGPT, Claude, Gemini, Perplexity, Grok, and Manus — now crawls the web with its own ranking signals. Here is exactly what each one looks for, and how Sitemizer helps you meet those standards.
             </p>
           </FadeUp>
           <FadeIn delay={0.1}>
@@ -565,7 +565,7 @@ export default function Home() {
                   <tr className="bg-muted/40 border-b border-border">
                     <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">AI Platform</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Key Ranking Signal</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">What Sitee Fixes</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">What Sitemizer Fixes</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -594,9 +594,9 @@ export default function Home() {
         <section className="max-w-4xl mx-auto mt-24">
           <FadeUp className="text-center mb-10">
             <span className="inline-block text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full uppercase tracking-wider mb-4">Results</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">What a Sitee Audit Delivers</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">What a Sitemizer Audit Delivers</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              In under 60 seconds, Sitee generates a complete strategic SEO package that would take an agency days to produce.
+              In under 60 seconds, Sitemizer generates a complete strategic SEO package that would take an agency days to produce.
             </p>
           </FadeUp>
           <StaggerGrid className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -615,9 +615,9 @@ export default function Home() {
           </StaggerGrid>
           <StaggerGrid className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
-              { quote: "I ran a Sitee audit on my plumbing business website and fixed the top 5 issues in one afternoon. Two weeks later I was ranking on page 1 for \"emergency plumber [city]\".", author: "Mike T.", role: "Plumbing Business Owner" },
-              { quote: "Our agency uses Sitee to deliver client audits in minutes instead of days. The AI-generated reports are professional enough to send directly to clients.", author: "Sarah K.", role: "Digital Marketing Agency" },
-              { quote: "The schema markup Sitee generated got our FAQ section appearing in Google's AI Overviews within 3 weeks. That alone was worth it.", author: "David L.", role: "E-commerce Store Owner" },
+              { quote: "I ran a Sitemizer audit on my plumbing business website and fixed the top 5 issues in one afternoon. Two weeks later I was ranking on page 1 for \"emergency plumber [city]\".", author: "Mike T.", role: "Plumbing Business Owner" },
+              { quote: "Our agency uses Sitemizer to deliver client audits in minutes instead of days. The AI-generated reports are professional enough to send directly to clients.", author: "Sarah K.", role: "Digital Marketing Agency" },
+              { quote: "The schema markup Sitemizer generated got our FAQ section appearing in Google's AI Overviews within 3 weeks. That alone was worth it.", author: "David L.", role: "E-commerce Store Owner" },
             ].map(({ quote, author, role }) => (
               <motion.div key={author} variants={cardVariant} className="bg-card border border-border rounded-xl p-5 space-y-3">
                 <Quote className="w-4 h-4 text-blue-400/60" />
@@ -647,32 +647,32 @@ export default function Home() {
               {
                 icon: Lightbulb,
                 q: "What is SEO and why does my business need it?",
-                a: "Search Engine Optimization (SEO) is the process of improving your website so it appears higher in Google, Bing, and AI search results when potential customers search for your products or services. Without SEO, your website is essentially invisible — even if it looks great. Sitee audits your site and gives you a step-by-step plan to get found.",
+                a: "Search Engine Optimization (SEO) is the process of improving your website so it appears higher in Google, Bing, and AI search results when potential customers search for your products or services. Without SEO, your website is essentially invisible — even if it looks great. Sitemizer audits your site and gives you a step-by-step plan to get found.",
               },
               {
                 icon: Award,
-                q: "How is Sitee different from other SEO tools?",
-                a: "Most SEO tools give you data — Sitee gives you a complete action plan. In 60 seconds, you get an 8-dimension health score, keyword opportunities with intent mapping, copy-paste metadata rewrites, JSON-LD schema markup, a 90-day content calendar, and a prioritized checklist. No SEO expertise required.",
+                q: "How is Sitemizer different from other SEO tools?",
+                a: "Most SEO tools give you data — Sitemizer gives you a complete action plan. In 60 seconds, you get an 8-dimension health score, keyword opportunities with intent mapping, copy-paste metadata rewrites, JSON-LD schema markup, a 90-day content calendar, and a prioritized checklist. No SEO expertise required.",
               },
               {
                 icon: Brain,
-                q: "Does Sitee optimize for ChatGPT, Gemini, and other AI search engines?",
-                a: "Yes. Sitee is built for the AI search era. It audits your site against the signals used by ChatGPT, Claude, Gemini, Perplexity, Grok, Manus, and Google AI Overviews — including structured data, E-E-A-T, topical authority, and answer-ready content formatting. This is called Answer Engine Optimization (AEO) and Generative Engine Optimization (GEO).",
+                q: "Does Sitemizer optimize for ChatGPT, Gemini, and other AI search engines?",
+                a: "Yes. Sitemizer is built for the AI search era. It audits your site against the signals used by ChatGPT, Claude, Gemini, Perplexity, Grok, Manus, and Google AI Overviews — including structured data, E-E-A-T, topical authority, and answer-ready content formatting. This is called Answer Engine Optimization (AEO) and Generative Engine Optimization (GEO).",
               },
               {
                 icon: TrendingUp,
-                q: "How quickly will I see results after implementing Sitee's recommendations?",
+                q: "How quickly will I see results after implementing Sitemizer's recommendations?",
                 a: "Technical fixes (meta tags, schema markup, internal links) can show results in 2–4 weeks as Google re-crawls your pages. Content improvements typically take 60–90 days to reflect in rankings. AI search visibility (ChatGPT citations, Perplexity answers) can improve faster — often within 2–3 weeks of adding proper structured data.",
               },
               {
                 icon: CheckCircle2,
-                q: "Do I need to be a developer to use Sitee's recommendations?",
-                a: "No. Sitee is designed for business owners, marketers, and content teams — not developers. Metadata rewrites are copy-paste ready. Schema markup is formatted as JSON-LD you can drop into your CMS. The action checklist is plain English with clear instructions. For technical changes, Sitee tells you exactly what to ask your developer.",
+                q: "Do I need to be a developer to use Sitemizer's recommendations?",
+                a: "No. Sitemizer is designed for business owners, marketers, and content teams — not developers. Metadata rewrites are copy-paste ready. Schema markup is formatted as JSON-LD you can drop into your CMS. The action checklist is plain English with clear instructions. For technical changes, Sitemizer tells you exactly what to ask your developer.",
               },
               {
                 icon: ShieldCheck,
                 q: "Is my audit data private and secure?",
-                a: "Yes. Each account's audit data is completely private and isolated — no other user can access your audits or reports. Sitee does not share your website data with third parties. Guest audits (without an account) are anonymized and not linked to any personal information.",
+                a: "Yes. Each account's audit data is completely private and isolated — no other user can access your audits or reports. Sitemizer does not share your website data with third parties. Guest audits (without an account) are anonymized and not linked to any personal information.",
               },
             ].map(({ icon: Icon, q, a }, i) => (
               <motion.details key={i} variants={cardVariant} className="group bg-card border border-border rounded-xl overflow-hidden">
@@ -713,13 +713,13 @@ export default function Home() {
       <footer className="border-t border-border bg-card/30">
         <div className="container py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <img src="/manus-storage/sitee-logo_7a495881.png" alt="Sitee" className="h-6 w-auto" />
+            <img src="/manus-storage/sitemizer-logo-cropped_8c43585e.png" alt="Sitemizer" className="h-6 w-auto" />
             <span className="text-xs text-muted-foreground">· AI-Powered SEO Audits</span>
           </div>
           <div className="flex items-center gap-4">
             <button onClick={() => navigate("/pricing")} className="hover:text-foreground transition-colors">Pricing</button>
             <a href="mailto:hello@trysitee.com" className="hover:text-foreground transition-colors">Contact</a>
-            <span>© {new Date().getFullYear()} Sitee</span>
+            <span>© {new Date().getFullYear()} Sitemizer</span>
           </div>
         </div>
       </footer>
