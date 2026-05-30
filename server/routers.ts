@@ -12,6 +12,8 @@ import {
   getReportById,
   listAllAuditsForAdmin,
   listAuditReviews,
+  listAuditsByDomain,
+  countAuditsByDomain,
   listAuditsForUser,
   listRecentAudits,
   listReportsForUser,
@@ -155,6 +157,21 @@ export const appRouter = router({
     list: protectedProcedure.query(async ({ ctx }) => {
       return listAuditsForUser(ctx.user.id, 20);
     }),
+
+    // List audits for the same domain as a given URL (domain-scoped history)
+    listByDomain: protectedProcedure
+      .input(z.object({ url: z.string() }))
+      .query(async ({ input, ctx }) => {
+        return listAuditsByDomain(ctx.user.id, input.url, 100);
+      }),
+
+    // Count how many times the current user has audited a specific domain
+    domainStats: protectedProcedure
+      .input(z.object({ url: z.string() }))
+      .query(async ({ input, ctx }) => {
+        const count = await countAuditsByDomain(ctx.user.id, input.url);
+        return { count };
+      }),
 
     // Get recent audits for landing page panel
     recent: publicProcedure.query(async ({ ctx }) => {

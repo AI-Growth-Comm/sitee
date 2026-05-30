@@ -212,3 +212,10 @@
 - [x] Overall accuracy score display and history
 - [x] Re-run button that uses improved scraping context (via New Audit panel with same URL)
 - [x] Add Quality Control nav item to dashboard sidebar (admin only)
+
+## Domain-Scoped Audit History (v11)
+- [x] Add audit.listByDomain tRPC query: filter audits by normalized domain, scoped to ctx.user.id
+- [x] Add audit.domainStats tRPC query: return total audit count for a given domain
+- [x] Update AuditDashboard History tab: pass current audit URL, filter list to same domain only
+- [x] Show "X audits for this domain" count at top of History tab
+- [x] Normalize domain comparison (strip www., protocol, trailing slash)

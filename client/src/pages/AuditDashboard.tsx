@@ -622,12 +622,17 @@ function LinkingTab({ linking }: { linking: InternalLinking }) {
 }
 
 // ─── History Tab ──────────────────────────────────────────────────────────────
-function HistoryTab({ onRerun }: { onRerun: (url: string, industry: string, customIndustry?: string | null) => void }) {
+function HistoryTab({ onRerun, currentUrl }: { onRerun: (url: string, industry: string, customIndustry?: string | null) => void; currentUrl: string }) {
   const { isAuthenticated } = useAuth();
-  const history = trpc.audit.list.useQuery(undefined, {
-    enabled: isAuthenticated,
-    refetchOnWindowFocus: false,
-  });
+  // Use domain-scoped query when we have a URL, fall back to full list
+  const domainHistory = trpc.audit.listByDomain.useQuery(
+    { url: currentUrl },
+    { enabled: isAuthenticated && !!currentUrl, refetchOnWindowFocus: false }
+  );
+  const domainStats = trpc.audit.domainStats.useQuery(
+    { url: currentUrl },
+    { enabled: isAuthenticated && !!currentUrl, refetchOnWindowFocus: false }
+  );
   const [, navigate] = useLocation();
 
   if (!isAuthenticated) {
@@ -644,7 +649,7 @@ function HistoryTab({ onRerun }: { onRerun: (url: string, industry: string, cust
     );
   }
 
-  if (history.isLoading) {
+  if (domainHistory.isLoading) {
     return (
       <div className="space-y-3">
         {[...Array(3)].map((_, i) => (
@@ -654,21 +659,37 @@ function HistoryTab({ onRerun }: { onRerun: (url: string, industry: string, cust
     );
   }
 
-  const allAudits = history.data ?? [];
+  const allAudits = domainHistory.data ?? [];
   // Show completed audits first, then failed ones; hide pending/running
   const audits = allAudits.filter(a => a.status === "complete" || a.status === "failed");
+  const totalCount = domainStats.data?.count ?? audits.length;
+  // Extract clean domain name for display
+  let displayDomain = currentUrl;
+  try { displayDomain = new URL(currentUrl.startsWith("http") ? currentUrl : `https://${currentUrl}`).hostname.replace(/^www\./, ""); } catch { /* keep as-is */ }
 
   if (audits.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-        <p className="text-muted-foreground">No audit history yet.</p>
-        <p className="text-sm text-muted-foreground">Run your first audit to see it here.</p>
+        <p className="text-muted-foreground">No audit history for <span className="font-medium text-foreground">{displayDomain}</span> yet.</p>
+        <p className="text-sm text-muted-foreground">Run an audit for this site to start tracking its history.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
+      {/* Domain count banner */}
+      <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 mb-1">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <span className="text-sm font-bold text-primary">{totalCount}</span>
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-foreground">
+            {totalCount === 1 ? "1 audit" : `${totalCount} audits`} for <span className="text-primary">{displayDomain}</span>
+          </p>
+          <p className="text-xs text-muted-foreground">Showing all audit runs for this domain only</p>
+        </div>
+      </div>
       {audits.map((audit) => {
         const isFailed = audit.status === "failed";
         const score = audit.overallScore;
@@ -1007,7 +1028,7 @@ export default function AuditDashboard({ embeddedId, onBack, onViewReport }: { e
           />
         )}
         {activeTab === "Internal Links" && linking && <LinkingTab linking={linking} />}
-        {activeTab === "History" && <HistoryTab onRerun={(url, ind, ci) => handleRerun(url, ind, ci)} />}
+        {activeTab === "History" && <HistoryTab onRerun={(url, ind, ci) => handleRerun(url, ind, ci)} currentUrl={audit.url} />}
 
         {/* Fallback for missing data */}
         {activeTab !== "History" && !tabHasData[activeTab] && (

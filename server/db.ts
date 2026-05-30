@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, like, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { audits, auditReviews, checklistProgress, reports, InsertUser, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
@@ -149,6 +149,48 @@ export async function listAuditsForUser(userId: number, limit = 20) {
     .where(eq(audits.userId, userId))
     .orderBy(desc(audits.createdAt))
     .limit(limit);
+}
+
+// ─── Domain-scoped audit helpers ────────────────────────────────────────────
+
+/** Normalize a URL to just its hostname for domain comparison */
+export function normalizeDomain(url: string): string {
+  try {
+    const u = new URL(url.startsWith("http") ? url : `https://${url}`);
+    return u.hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return url.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].toLowerCase();
+  }
+}
+
+/** List all audits for a user that match the same domain as the given URL */
+export async function listAuditsByDomain(userId: number, url: string, limit = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  const domain = normalizeDomain(url);
+  // Fetch all user audits then filter by exact normalized domain in JS
+  // This avoids SQL LIKE false-positives (e.g. "example.com" matching "notexample.com")
+  const allUserAudits = await db
+    .select()
+    .from(audits)
+    .where(eq(audits.userId, userId))
+    .orderBy(desc(audits.createdAt))
+    .limit(1000);
+  return allUserAudits
+    .filter(a => normalizeDomain(a.url) === domain)
+    .slice(0, limit);
+}
+
+/** Count how many times a user has audited a specific domain */
+export async function countAuditsByDomain(userId: number, url: string): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const domain = normalizeDomain(url);
+  const allUserAudits = await db
+    .select({ url: audits.url })
+    .from(audits)
+    .where(eq(audits.userId, userId));
+  return allUserAudits.filter(a => normalizeDomain(a.url) === domain).length;
 }
 
 export async function listRecentAudits(userId: number | null, limit = 3) {
