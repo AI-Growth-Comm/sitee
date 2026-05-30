@@ -7,14 +7,18 @@ import {
   createAudit,
   deleteReport,
   getAuditById,
+  getAuditReview,
   getChecklistProgress,
   getReportById,
+  listAllAuditsForAdmin,
+  listAuditReviews,
   listAuditsForUser,
   listRecentAudits,
   listReportsForUser,
   saveReport,
   updateAuditResults,
   updateAuditStatus,
+  upsertAuditReview,
   upsertChecklistItem,
 } from "./db";
 import { runFullAudit } from "./auditEngine";
@@ -268,7 +272,56 @@ export const appRouter = router({
       }),
   }),
 
-  // ─── Dashboard (user dashboard) ─────────────────────────────────────────────
+  // ─── Audit Quality Control (admin only) ─────────────────────────────────────────
+  quality: router({
+    // List all completed audits for admin review
+    listAudits: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return listAllAuditsForAdmin(100);
+    }),
+
+    // Get a specific audit with full data + existing review for admin
+    getAuditForReview: protectedProcedure
+      .input(z.object({ auditId: z.number() }))
+      .query(async ({ input, ctx }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        const audit = await getAuditById(input.auditId);
+        if (!audit) throw new TRPCError({ code: "NOT_FOUND", message: "Audit not found" });
+        const review = await getAuditReview(input.auditId, ctx.user.id);
+        return { audit, review };
+      }),
+
+    // Submit or update an accuracy review for an audit
+    submitReview: protectedProcedure
+      .input(z.object({
+        auditId: z.number(),
+        sectionFlags: z.record(z.string(), z.object({
+          rating: z.enum(["accurate", "partial", "inaccurate"]),
+          notes: z.string(),
+        })),
+        overallAccuracy: z.number().min(0).max(100),
+        notes: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        const reviewId = await upsertAuditReview({
+          auditId: input.auditId,
+          reviewerId: ctx.user.id,
+          sectionFlags: input.sectionFlags as Record<string, { rating: string; notes: string }>,
+          overallAccuracy: input.overallAccuracy,
+          notes: input.notes,
+        });
+        return { reviewId };
+      }),
+
+    // List all submitted reviews
+    listReviews: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      return listAuditReviews(50);
+    }),
+  }),
+
+  // ─── Dashboard (user dashboard) ─────────────────────────────────────────────────────
   dashboard: router({
     summary: protectedProcedure.query(async ({ ctx }) => {
       const [allAudits, allReports] = await Promise.all([

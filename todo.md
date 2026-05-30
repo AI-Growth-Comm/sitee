@@ -193,3 +193,22 @@
 - [x] Fix AuditTeaser.tsx: replace hardcoded text-[#0D9488] with text-[#00AEEF] on CTA button
 - [x] Fix Pricing.tsx: replace hardcoded teal gradient from-[#0D9488] to-[#0F766E] with from-[#00AEEF] to-[#0090C8]
 - [x] Fix Pricing.tsx: replace hardcoded text-[#0D9488] with text-[#00AEEF] on CTA button
+
+## Audit Engine Accuracy Improvements
+- [x] Add real web scraping to auditEngine.ts: fetch HTML, extract title, meta desc, H1s, nav links, body text, page count
+- [x] Implement multi-strategy scraping: direct fetch with browser user-agent, fallback to text extraction
+- [x] Discover actual site pages from nav links and sitemap
+- [x] Pass scraped site context (title, meta, pages, content snippets) to ALL 6 LLM calls
+- [x] Rewrite LLM prompts to use actual scraped data, not just URL+industry placeholders
+- [x] Add siteContext field to auditEngine result for storage and display in QC panel
+
+## Audit Quality Control Panel
+- [x] Add auditReviews table to schema: auditId, reviewerId, sectionFlags (JSON), overallAccuracy, notes, createdAt
+- [x] Run db:push for auditReviews table
+- [x] Add admin tRPC procedures: quality.getAuditForReview, quality.submitReview, quality.listReviews
+- [x] Build AuditQualityPanel.tsx: inline view in dashboard (admin only) showing scraped context vs LLM output
+- [x] Section-by-section accuracy flags: Keywords, Metadata, Calendar, Recommendations, Internal Links
+- [x] Per-section rating: Accurate / Partially Accurate / Inaccurate + notes field
+- [x] Overall accuracy score display and history
+- [x] Re-run button that uses improved scraping context (via New Audit panel with same URL)
+- [x] Add Quality Control nav item to dashboard sidebar (admin only)

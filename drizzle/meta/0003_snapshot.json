@@ -1,9 +1,113 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "e131e29c-6e44-489d-ae68-e7150d9a5fcb",
-  "prevId": "a409d389-1955-494e-b103-fbeb0a2b30d7",
+  "id": "a526cb14-d74e-46a6-87e3-12803bc218e5",
+  "prevId": "e131e29c-6e44-489d-ae68-e7150d9a5fcb",
   "tables": {
+    "auditReviews": {
+      "name": "auditReviews",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "auditId": {
+          "name": "auditId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reviewerId": {
+          "name": "reviewerId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sectionFlags": {
+          "name": "sectionFlags",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "overallAccuracy": {
+          "name": "overallAccuracy",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "auditReviews_auditId_audits_id_fk": {
+          "name": "auditReviews_auditId_audits_id_fk",
+          "tableFrom": "auditReviews",
+          "tableTo": "audits",
+          "columnsFrom": [
+            "auditId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "auditReviews_reviewerId_users_id_fk": {
+          "name": "auditReviews_reviewerId_users_id_fk",
+          "tableFrom": "auditReviews",
+          "tableTo": "users",
+          "columnsFrom": [
+            "reviewerId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "auditReviews_id": {
+          "name": "auditReviews_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
     "audits": {
       "name": "audits",
       "columns": {
@@ -33,6 +137,13 @@
           "type": "varchar(128)",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "customIndustry": {
+          "name": "customIndustry",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "overallScore": {
@@ -106,6 +217,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "siteContext": {
+          "name": "siteContext",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "status": {
           "name": "status",
           "type": "enum('pending','running','complete','failed')",
@@ -124,6 +242,21 @@
         "durationMs": {
           "name": "durationMs",
           "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "claimed": {
+          "name": "claimed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "guestToken": {
+          "name": "guestToken",
+          "type": "varchar(64)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -481,6 +614,5 @@
   "internal": {
     "tables": {},
     "indexes": {}
-  },
-  "prevSnapshot": "a409d389-1955-494e-b103-fbeb0a2b30d7"
+  }
 }

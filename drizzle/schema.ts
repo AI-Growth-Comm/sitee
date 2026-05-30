@@ -43,6 +43,7 @@ export const audits = mysqlTable("audits", {
   checklist: json("checklist"),
   linking: json("linking"),
   roadmap: json("roadmap"),
+  siteContext: json("siteContext"),
   status: mysqlEnum("status", ["pending", "running", "complete", "failed"])
     .default("pending")
     .notNull(),
@@ -89,3 +90,19 @@ export const reports = mysqlTable("reports", {
 
 export type Report = typeof reports.$inferSelect;
 export type InsertReport = typeof reports.$inferInsert;
+
+export const auditReviews = mysqlTable("auditReviews", {
+  id: int("id").autoincrement().primaryKey(),
+  auditId: int("auditId").notNull().references(() => audits.id),
+  reviewerId: int("reviewerId").notNull().references(() => users.id),
+  // Per-section accuracy flags: JSON object with section names as keys
+  // Each section: { rating: 'accurate' | 'partial' | 'inaccurate', notes: string }
+  sectionFlags: json("sectionFlags"),
+  overallAccuracy: int("overallAccuracy").default(0).notNull(), // 0-100
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AuditReview = typeof auditReviews.$inferSelect;
+export type InsertAuditReview = typeof auditReviews.$inferInsert;

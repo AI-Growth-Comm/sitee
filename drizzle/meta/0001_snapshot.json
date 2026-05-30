@@ -2,7 +2,7 @@
   "version": "5",
   "dialect": "mysql",
   "id": "a409d389-1955-494e-b103-fbeb0a2b30d7",
-  "prevId": "fa98b479-747c-429b-b6ca-b6c9f7ced20e",
+  "prevId": "6d5cc4a5-facc-4eb5-a5db-e81e11300f82",
   "tables": {
     "audits": {
       "name": "audits",
@@ -481,5 +481,6 @@
   "internal": {
     "tables": {},
     "indexes": {}
-  }
+  },
+  "prevSnapshot": "6d5cc4a5-facc-4eb5-a5db-e81e11300f82"
 }

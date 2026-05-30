@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { audits, checklistProgress, reports, InsertUser, users } from "../drizzle/schema";
+import { audits, auditReviews, checklistProgress, reports, InsertUser, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -126,6 +126,7 @@ export async function updateAuditResults(
       checklist: data.checklist,
       linking: data.linking,
       roadmap: data.roadmap,
+      siteContext: (data as any).siteContext ?? null,
       durationMs: data.durationMs,
       status: "complete",
     })
@@ -261,4 +262,72 @@ export async function getReportById(id: number) {
   if (!db) throw new Error("Database not available");
   const result = await db.select().from(reports).where(eq(reports.id, id)).limit(1);
   return result.length > 0 ? result[0] : null;
+}
+
+// ─── Audit Review helpers ─────────────────────────────────────────────────────
+
+export async function upsertAuditReview(data: {
+  auditId: number;
+  reviewerId: number;
+  sectionFlags: Record<string, { rating: string; notes: string }>;
+  overallAccuracy: number;
+  notes: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db
+    .select()
+    .from(auditReviews)
+    .where(and(eq(auditReviews.auditId, data.auditId), eq(auditReviews.reviewerId, data.reviewerId)))
+    .limit(1);
+  if (existing.length > 0) {
+    await db
+      .update(auditReviews)
+      .set({ sectionFlags: data.sectionFlags, overallAccuracy: data.overallAccuracy, notes: data.notes })
+      .where(eq(auditReviews.id, existing[0].id));
+    return existing[0].id;
+  } else {
+    const result = await db.insert(auditReviews).values(data);
+    return result[0].insertId as number;
+  }
+}
+
+export async function getAuditReview(auditId: number, reviewerId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db
+    .select()
+    .from(auditReviews)
+    .where(and(eq(auditReviews.auditId, auditId), eq(auditReviews.reviewerId, reviewerId)))
+    .limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function listAuditReviews(limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(auditReviews)
+    .orderBy(desc(auditReviews.createdAt))
+    .limit(limit);
+}
+
+export async function listAllAuditsForAdmin(limit = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      id: audits.id,
+      url: audits.url,
+      industry: audits.industry,
+      overallScore: audits.overallScore,
+      status: audits.status,
+      createdAt: audits.createdAt,
+      userId: audits.userId,
+    })
+    .from(audits)
+    .where(eq(audits.status, "complete"))
+    .orderBy(desc(audits.createdAt))
+    .limit(limit);
 }

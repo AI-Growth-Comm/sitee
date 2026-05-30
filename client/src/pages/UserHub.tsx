@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, lazy, Suspense } from "react";
 const AuditDashboard = lazy(() => import("./AuditDashboard"));
 const ReportViewer = lazy(() => import("./ReportViewer"));
 const SavedReportViewer = lazy(() => import("./SavedReportViewer"));
+const AuditQualityPanel = lazy(() => import("./AuditQualityPanel"));
 import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -32,6 +33,7 @@ import {
   Sun,
   Search,
   AlertCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { INDUSTRIES } from "@shared/auditTypes";
@@ -50,7 +52,7 @@ function MiniScore({ score }: { score: number }) {
 }
 
 // ─── Section types ────────────────────────────────────────────────────────────
-type Section = "overview" | "new-audit" | "history" | "reports" | "profile";
+type Section = "overview" | "new-audit" | "history" | "reports" | "profile" | "quality";
 type InlineView =
   | { type: "audit"; auditId: number }
   | { type: "report"; auditId: number }
@@ -608,6 +610,25 @@ export default function UserDashboard() {
               <TooltipContent side="right">{item.tooltip}</TooltipContent>
             </Tooltip>
           ))}
+          {/* Admin-only: Quality Control */}
+          {user?.role === "admin" && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => { setInlineView(null); setActiveSection("quality"); }}
+                  className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
+                    activeSection === "quality"
+                      ? "bg-[#00AEEF]/10 text-[#00AEEF]"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                  } ${!sidebarOpen ? "justify-center" : ""}`}
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  {sidebarOpen && <span className="truncate">Quality Control</span>}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Admin: Review audit accuracy and flag incorrect sections</TooltipContent>
+            </Tooltip>
+          )}
         </nav>
 
         {/* Bottom: theme + logout */}
@@ -647,6 +668,7 @@ export default function UserDashboard() {
             <p className="text-sm font-semibold text-foreground capitalize">
               {inlineView
                 ? inlineView.type === "audit" ? "Audit Results" : "SEO Report"
+                : activeSection === "quality" ? "Quality Control"
                 : NAV_ITEMS.find((n) => n.id === activeSection)?.label}
             </p>
           </div>
@@ -702,6 +724,7 @@ export default function UserDashboard() {
                 {activeSection === "history"   && <HistorySection audits={data.recentAudits} onNavigate={handleNavigate} onNewAudit={() => setActiveSection("new-audit")} />}
                 {activeSection === "reports"   && <ReportsSection reports={data.savedReports} onNavigate={handleNavigate} onNewAudit={() => setActiveSection("new-audit")} />}
                 {activeSection === "profile"   && <ProfileSection data={data} />}
+                {activeSection === "quality"   && user?.role === "admin" && <AuditQualityPanel />}
               </>
             )}
           </div>
