@@ -6,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { Loader2, Sparkles, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
-
+import { Loader2, Sparkles, CheckCircle2, AlertTriangle, XCircle, Brain, Trash2 } from "lucide-react";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Rating = "accurate" | "partial" | "inaccurate";
@@ -421,6 +420,9 @@ function AuditReviewForm({ auditId, onBack }: { auditId: number; onBack: () => v
         </Card>
       )}
 
+      {/* Auto-generated quality insight (from background pipeline) */}
+      <AutoInsightsBanner auditId={auditId} />
+
       {/* Site Context */}
       <SiteContextViewer siteContext={(audit as any).siteContext} />
 
@@ -581,8 +583,144 @@ function AuditReviewForm({ auditId, onBack }: { auditId: number; onBack: () => v
   );
 }
 
-// ─── Review History ───────────────────────────────────────────────────────────
+// ─── Auto Quality Insights Banner ────────────────────────────────────────────
 
+function AutoInsightsBanner({ auditId }: { auditId: number }) {
+  const { data: insight, isLoading } = trpc.quality.getInsights.useQuery({ auditId });
+  if (isLoading) return null;
+  if (!insight) {
+    return (
+      <div className="border border-dashed border-border rounded-lg p-3 text-xs text-muted-foreground flex items-center gap-2">
+        <Brain className="w-4 h-4 flex-shrink-0" />
+        Auto-analysis pending — runs in background after audit completion.
+      </div>
+    );
+  }
+  const sections = (insight.sectionResults ?? {}) as Record<string, { rating: string; reasoning: string; suggestedFix?: string }>;
+  const failingSections = Object.entries(sections).filter(([, s]) => s.rating === "inaccurate" || s.rating === "partial");
+  return (
+    <div className="border border-[#00AEEF]/30 bg-[#00AEEF]/5 rounded-lg p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Brain className="w-4 h-4 text-[#00AEEF]" />
+          <span className="text-sm font-semibold text-[#00AEEF]">Auto-Generated Quality Insight</span>
+          <span className="text-xs text-muted-foreground">({new Date(insight.createdAt).toLocaleDateString()})</span>
+        </div>
+        <span className={`text-xl font-bold ${
+          insight.overallAccuracy >= 70 ? "text-emerald-400" :
+          insight.overallAccuracy >= 40 ? "text-amber-400" : "text-red-400"
+        }`}>{insight.overallAccuracy}%</span>
+      </div>
+      {insight.overallSummary && <p className="text-sm text-foreground/90 leading-relaxed">{insight.overallSummary}</p>}
+      {failingSections.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs text-muted-foreground font-medium">Issues found ({failingSections.length} sections):</p>
+          <div className="flex flex-wrap gap-1">
+            {failingSections.map(([key, s]) => (
+              <span key={key} className={`text-xs px-2 py-0.5 rounded border ${
+                s.rating === "inaccurate" ? "bg-red-500/20 text-red-300 border-red-500/40" : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+              }`}>{s.rating === "inaccurate" ? "✗" : "~"} {key}</span>
+            ))}
+          </div>
+        </div>
+      )}
+      {insight.criteriaExtracted > 0 && (
+        <p className="text-xs text-emerald-400">✓ {insight.criteriaExtracted} improvement criteria extracted and applied to future audits for this domain.</p>
+      )}
+    </div>
+  );
+}
+
+// ─── Learned Criteria View ────────────────────────────────────────────────────
+
+function LearnedCriteriaView() {
+  const { data: audits } = trpc.quality.listAudits.useQuery();
+  const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+  const utils = trpc.useUtils();
+  const rawDomains = (audits ?? []).map(a => {
+    try { return new URL(a.url.startsWith("http") ? a.url : `https://${a.url}`).hostname.replace(/^www\./, ""); }
+    catch { return a.url; }
+  });
+  const domains = Array.from(new Set(rawDomains)).sort();
+  const { data: criteria, isLoading } = trpc.quality.getCriteriaForDomain.useQuery(
+    { domain: selectedDomain ?? "" },
+    { enabled: !!selectedDomain }
+  );
+  const dismiss = trpc.quality.dismissCriteria.useMutation({
+    onSuccess: () => { utils.quality.getCriteriaForDomain.invalidate(); toast.success("Criterion dismissed."); },
+    onError: (err) => toast.error(err.message),
+  });
+  const activeCriteria = (criteria ?? []).filter(c => c.active);
+  const dismissedCriteria = (criteria ?? []).filter(c => !c.active);
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Brain className="w-5 h-5 text-[#00AEEF]" />
+        <div>
+          <h3 className="font-semibold text-sm">Learned Criteria</h3>
+          <p className="text-xs text-muted-foreground">Issues extracted from past audits — automatically injected into future runs to prevent repeating mistakes.</p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {domains.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No audits found. Run an audit first.</p>
+        ) : domains.map(domain => (
+          <button key={domain} onClick={() => setSelectedDomain(domain)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+              selectedDomain === domain ? "bg-[#00AEEF]/20 border-[#00AEEF]/60 text-[#00AEEF]" : "border-border text-muted-foreground hover:border-foreground/40"
+            }`}>{domain}</button>
+        ))}
+      </div>
+      {selectedDomain && (
+        <div className="space-y-3">
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">Loading criteria...</div>
+          ) : activeCriteria.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-lg">
+              <Brain className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              <p className="text-sm">No active criteria for {selectedDomain}</p>
+              <p className="text-xs mt-1">Criteria are extracted automatically after each audit analysis.</p>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground">{activeCriteria.length} active criteria for <strong>{selectedDomain}</strong> — injected into every new audit for this domain.</p>
+              <div className="space-y-2">
+                {activeCriteria.map(c => (
+                  <div key={c.id} className={`border rounded-lg p-3 flex items-start gap-3 ${
+                    c.severity === "high" ? "border-red-500/30 bg-red-500/5" : c.severity === "medium" ? "border-amber-500/30 bg-amber-500/5" : "border-border bg-muted/20"
+                  }`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-xs font-semibold uppercase ${
+                          c.severity === "high" ? "text-red-400" : c.severity === "medium" ? "text-amber-400" : "text-muted-foreground"
+                        }`}>{c.severity}</span>
+                        <span className="text-xs text-muted-foreground">{c.sectionName}</span>
+                        <span className="text-xs text-muted-foreground ml-auto">{new Date(c.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-xs text-foreground/90 mb-1">{c.description}</p>
+                      {c.suggestedFix && (
+                        <p className="text-xs text-[#00AEEF] flex items-start gap-1">
+                          <span className="flex-shrink-0">→ Fix:</span><span>{c.suggestedFix}</span>
+                        </p>
+                      )}
+                    </div>
+                    <button onClick={() => dismiss.mutate({ criteriaId: c.id })} disabled={dismiss.isPending}
+                      className="flex-shrink-0 p-1.5 rounded hover:bg-red-500/20 text-muted-foreground hover:text-red-400 transition-colors" title="Dismiss">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {dismissedCriteria.length > 0 && <p className="text-xs text-muted-foreground">{dismissedCriteria.length} dismissed criteria (no longer applied).</p>}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Review History ───────────────────────────────────────────────────────────
 function ReviewHistory() {
   const { data: reviews, isLoading } = trpc.quality.listReviews.useQuery();
   const { data: audits } = trpc.quality.listAudits.useQuery();
@@ -714,7 +852,7 @@ export default function AuditQualityPanel() {
       {/* Tab navigation */}
       {!selectedAuditId && (
         <div className="flex gap-1 border-b border-border">
-          {([["audits", "Review Audits"], ["history", "Review History"]] as [Tab, string][]).map(([t, label]) => (
+          {([["audits", "Review Audits"], ["history", "Review History"], ["criteria", "Learned Criteria"]] as [Tab, string][]).map(([t, label]) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -735,8 +873,10 @@ export default function AuditQualityPanel() {
         <AuditReviewForm auditId={selectedAuditId} onBack={() => setSelectedAuditId(null)} />
       ) : tab === "audits" ? (
         <AuditListView onSelect={setSelectedAuditId} />
-      ) : (
+      ) : tab === "history" ? (
         <ReviewHistory />
+      ) : (
+        <LearnedCriteriaView />
       )}
     </div>
   );

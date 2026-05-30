@@ -1021,7 +1021,9 @@ export default function ReportViewer({ embeddedId, onBack }: { embeddedId?: numb
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
             <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs print:hidden"
-              onClick={() => window.print()}>
+              onClick={() => {
+                window.open(`/print-report?auditId=${auditId}`, "_blank", "width=960,height=720");
+              }}>
               <Download className="w-3.5 h-3.5" />
               Print / PDF
             </Button>

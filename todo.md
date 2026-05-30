@@ -165,19 +165,19 @@
 - [x] Build Pricing.tsx at /pricing (3-tier: Free/Pro/Agency, feature comparison table)
 - [x] Link /pricing from Home nav and teaser sign-in wall
 
-## Hub Shell Refactor (v8)
-- [ ] Update hub.summary to return full audit history (not just 5)
-- [ ] Add hub sub-routes to App.tsx: /hub/audit/:id, /hub/audit/:id/report, /hub/reports, /hub/reports/:id
-- [ ] Build HubShell layout with persistent sidebar + dynamic main area
-- [ ] Build inline NewAudit panel (form + loading + results inside hub)
-- [ ] Adapt AuditDashboard → HubAuditView (no standalone nav, inside hub shell)
-- [ ] Adapt ReportViewer → HubReportView (no standalone nav, inside hub shell)
-- [ ] Adapt SavedReports + SavedReportViewer → hub sections
-- [ ] Keep standalone /audit/:id and /audit/:id/report routes for backward compat
+## Hub Shell Refactor (v8) — superseded by v10 inline hub implementation
+- [x] Update hub.summary to return full audit history (implemented in v10 via allAudits field)
+- [x] Add hub sub-routes: /dashboard handles inline navigation via inlineView state
+- [x] Build HubShell layout with persistent sidebar + dynamic main area (UserHub.tsx)
+- [x] Build inline NewAudit panel (form + loading + results inside hub) (NewAuditPanel)
+- [x] Adapt AuditDashboard → embedded inside dashboard via inlineView state
+- [x] Adapt ReportViewer → embedded inside dashboard via inlineView state
+- [x] Adapt SavedReports + SavedReportViewer → hub sections (Reports tab in HistorySection)
+- [x] Keep standalone /audit/:id and /audit/:id/report routes for backward compat
 
-## Hub Shell Option A (v9)
-- [ ] Rewrite UserHub.tsx: inline audit/report/saved-report rendering with selectedAuditId state
-- [ ] TypeScript check + tests + checkpoint
+## Hub Shell Option A (v9) — superseded by v10 inline hub implementation
+- [x] Rewrite UserHub.tsx: inline audit/report/saved-report rendering with selectedAuditId state
+- [x] TypeScript check + tests + checkpoint
 
 ## New Sprint (v10)
 - [x] Fix data isolation: audit.list, hub.summary, report.list must be strictly scoped to ctx.user.id — no guest/cross-account leakage
@@ -242,3 +242,26 @@
 - [x] Merge Reports nav item into Audit History: tabbed view (Audit History / Saved Reports) inside single section
 - [x] Reports sidebar nav now routes to Audit History with Reports tab pre-selected
 - [x] Save Report invalidates dashboard cache so Reports tab reflects new saves
+
+## Self-Improving Audit Quality System (v13)
+- [ ] Add auditCriteria table: id, domain, sectionName, issueType, description, severity, learnedFrom (auditId), createdAt
+- [ ] Add qualityInsights table: id, auditId, sectionName, verdict, reasoning, suggestedFix, appliedAt
+- [ ] Run db:push for new tables
+- [ ] Auto-trigger quality analysis after every audit completes (post-audit hook in audit.run)
+- [ ] Extract failure patterns from analysis: store per-section issues in auditCriteria table
+- [ ] Flag known issues in future audits: before LLM calls, query auditCriteria for same domain and inject as "known issues to avoid" context
+- [ ] Add quality.getInsights tRPC query: return learned criteria for a domain
+- [ ] Show "Known Issues Applied" badge on audit dashboard when prior criteria were injected
+- [ ] Add quality.getCriteriaForDomain tRPC query: admin view of all learned criteria
+- [ ] Show learned criteria list in Quality Control panel with ability to dismiss/delete entries
+
+## Professional PDF Report Template (v13)
+- [ ] Build PrintReport.tsx: self-contained print view with @page CSS, cover page, TOC, scorecard, 4 modules
+- [ ] Cover page: Sitemizer logo, report title, client URL, industry, generation date, maturity level
+- [ ] Running header/footer with CSS counters (Page X of Y), brand notice
+- [ ] SVG semi-circular gauge for overall score
+- [ ] CSS horizontal progress bars for 7 dimension scores
+- [ ] Pure CSS/SVG keyword tier tables, metadata comparison, internal linking map
+- [ ] 90-Day roadmap phase cards, KPI table
+- [ ] Wire Print/PDF button in ReportViewer to open PrintReport.tsx in a new window and trigger window.print()
+- [ ] Add print stylesheet: page-break-before on modules, page-break-inside: avoid on cards/tables

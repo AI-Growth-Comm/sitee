@@ -24,6 +24,7 @@ import {
   upsertChecklistItem,
 } from "./db";
 import { runFullAudit } from "./auditEngine";
+import { runPostAuditQualityPipeline, loadCriteriaForDomain, formatCriteriaAsContext, normalizeDomain } from "./qualityLearningEngine";
 
 export const appRouter = router({
   system: systemRouter,
@@ -70,7 +71,11 @@ export const appRouter = router({
         });
         await updateAuditStatus(auditId, "running");
         try {
-          const result = await runFullAudit(input.url, effectiveIndustry);
+          // Load known quality criteria for this domain and inject into audit
+          const domain = normalizeDomain(input.url);
+          const knownCriteria = await loadCriteriaForDomain(domain);
+          const criteriaContext = formatCriteriaAsContext(knownCriteria);
+          const result = await runFullAudit(input.url, effectiveIndustry, criteriaContext);
           const durationMs = Date.now() - startTime;
 
           await updateAuditResults(auditId, {
@@ -85,6 +90,33 @@ export const appRouter = router({
             linking: result.linking,
             roadmap: result.roadmap,
             durationMs,
+          });
+
+          // Fire-and-forget: run quality analysis pipeline after audit completes
+          // This stores insights and extracts criteria for future improvement
+          setImmediate(async () => {
+            try {
+              const fullAudit = await getAuditById(auditId);
+              if (fullAudit) {
+                await runPostAuditQualityPipeline({
+                  id: fullAudit.id,
+                  url: fullAudit.url,
+                  industry: fullAudit.industry,
+                  overallScore: fullAudit.overallScore,
+                  siteContext: fullAudit.siteContext,
+                  keywords: fullAudit.keywords,
+                  metadata: fullAudit.metadata,
+                  calendar: fullAudit.calendar,
+                  checklist: fullAudit.checklist,
+                  linking: fullAudit.linking,
+                  overview: fullAudit.overview,
+                  contentAudit: fullAudit.contentAudit,
+                  roadmap: fullAudit.roadmap,
+                });
+              }
+            } catch (err) {
+              console.error("[PostAuditQuality] Pipeline error:", err);
+            }
           });
 
           return { auditId, overallScore: result.overallScore };
@@ -401,6 +433,47 @@ export const appRouter = router({
           overallSummary: string;
           sections: Record<string, { rating: string; reasoning: string }>;
         };
+      }),
+
+    // Get quality insights for a specific audit (auto-generated after completion)
+    getInsights: protectedProcedure
+      .input(z.object({ auditId: z.number() }))
+      .query(async ({ input, ctx }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        const { getDb } = await import("./db");
+        const db = await getDb();
+        if (!db) return null;
+        const { qualityInsights } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const rows = await db.select().from(qualityInsights).where(eq(qualityInsights.auditId, input.auditId)).limit(5);
+        return rows[0] ?? null;
+      }),
+
+    // Get all learned criteria for a domain
+    getCriteriaForDomain: protectedProcedure
+      .input(z.object({ domain: z.string() }))
+      .query(async ({ input, ctx }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        const { getDb } = await import("./db");
+        const db = await getDb();
+        if (!db) return [];
+        const { auditCriteria } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        return db.select().from(auditCriteria).where(eq(auditCriteria.domain, input.domain)).orderBy(auditCriteria.createdAt).limit(50);
+      }),
+
+    // Dismiss (deactivate) a learned criterion
+    dismissCriteria: protectedProcedure
+      .input(z.object({ criteriaId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+        const { getDb } = await import("./db");
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const { auditCriteria } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        await db.update(auditCriteria).set({ active: false }).where(eq(auditCriteria.id, input.criteriaId));
+        return { success: true };
       }),
   }),
 

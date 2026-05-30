@@ -106,3 +106,33 @@ export const auditReviews = mysqlTable("auditReviews", {
 
 export type AuditReview = typeof auditReviews.$inferSelect;
 export type InsertAuditReview = typeof auditReviews.$inferInsert;
+
+// Learned audit criteria: extracted failure patterns applied to future audits
+export const auditCriteria = mysqlTable("auditCriteria", {
+  id: int("id").autoincrement().primaryKey(),
+  domain: varchar("domain", { length: 512 }).notNull(),
+  sectionName: varchar("sectionName", { length: 64 }).notNull(),
+  issueType: varchar("issueType", { length: 128 }).notNull(),
+  description: text("description").notNull(),
+  suggestedFix: text("suggestedFix"),
+  severity: mysqlEnum("severity", ["low", "medium", "high"]).default("medium").notNull(),
+  learnedFromAuditId: int("learnedFromAuditId").references(() => audits.id),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type AuditCriteria = typeof auditCriteria.$inferSelect;
+export type InsertAuditCriteria = typeof auditCriteria.$inferInsert;
+
+// Quality insights: per-audit AI analysis results stored for display and learning
+export const qualityInsights = mysqlTable("qualityInsights", {
+  id: int("id").autoincrement().primaryKey(),
+  auditId: int("auditId").notNull().references(() => audits.id),
+  overallAccuracy: int("overallAccuracy").default(0).notNull(),
+  overallSummary: text("overallSummary"),
+  sectionResults: json("sectionResults"),
+  criteriaExtracted: int("criteriaExtracted").default(0).notNull(),
+  triggeredBy: mysqlEnum("triggeredBy", ["auto", "manual"]).default("auto").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type QualityInsight = typeof qualityInsights.$inferSelect;
+export type InsertQualityInsight = typeof qualityInsights.$inferInsert;

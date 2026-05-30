@@ -463,6 +463,7 @@ export type AuditResult = {
 export async function runFullAudit(
   url: string,
   industry: string,
+  criteriaContext?: string,
   onProgress?: (p: AuditProgress) => void
 ): Promise<AuditResult> {
   const report = (stage: string, step: number) => onProgress?.({ stage, step, total: 7 });
@@ -487,7 +488,9 @@ export async function runFullAudit(
     };
   }
 
-  const siteCtx = formatSiteContextForPrompt(siteContext);
+  // Append known quality criteria to site context for all LLM calls
+  const siteCtxBase = formatSiteContextForPrompt(siteContext);
+  const siteCtx = criteriaContext ? siteCtxBase + criteriaContext : siteCtxBase;
 
   report("Scoring 8 SEO dimensions...", 2);
   let overview = await runOverviewCall(url, industry, siteCtx);

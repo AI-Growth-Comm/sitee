@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import UserDashboard from "./pages/UserHub";
 import AuditTeaser from "./pages/AuditTeaser";
 import Pricing from "./pages/Pricing";
+import PrintReport from "./pages/PrintReport";
 
 // Redirect /audit/:id  →  /dashboard?auditId=:id
 function AuditRedirect() {
@@ -41,6 +42,8 @@ function Router() {
       <Route path="/audit/:id" component={AuditRedirect} />
       <Route path="/reports"><Redirect to="/dashboard?section=reports" /></Route>
       <Route path="/report/:id" component={SavedReportRedirect} />
+      {/* Print-optimized PDF template — opens in new tab */}
+      <Route path="/print-report" component={PrintReport} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
