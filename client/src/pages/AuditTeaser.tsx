@@ -269,7 +269,7 @@ export default function AuditTeaser() {
 
         {/* Sign-in wall card */}
         <div className="rounded-2xl overflow-hidden shadow-xl border border-primary/20">
-          <div className="bg-gradient-to-br from-[#0D9488] to-[#0F766E] p-8 md:p-10">
+          <div className="bg-gradient-to-br from-[#00AEEF] to-[#0090C8] p-8 md:p-10">
             <div className="max-w-2xl mx-auto text-center space-y-6">
               <div>
                 <p className="text-white/80 text-sm font-medium mb-2 uppercase tracking-wider">Your full results are ready</p>
@@ -293,7 +293,7 @@ export default function AuditTeaser() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <a
                   href="#" onClick={(e) => { e.preventDefault(); handleSignIn(); }}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[#0D9488] font-bold px-6 py-3 rounded-xl hover:bg-white/95 transition-all shadow-md text-sm"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-[#00AEEF] font-bold px-6 py-3 rounded-xl hover:bg-white/95 transition-all shadow-md text-sm"
                 >
                   <Zap className="w-4 h-4" />
                   Unlock My Full Results — It&apos;s Free

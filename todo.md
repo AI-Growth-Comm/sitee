@@ -186,3 +186,10 @@
 - [x] Expand home page: add 5 SEO/AEO/GEO content sections (How we help, AI standards, Problems solved, Fast updates, Who it's for)
 - [x] Add 6 FAQs accordion to home page
 - [x] Add full SEO meta tags + OG tags + JSON-LD to index.html
+
+## Brand Color Update (Sitemizer)
+- [x] Update CSS variables in index.css to Sitemizer electric blue (#00AEEF = oklch(0.70 0.17 215))
+- [x] Fix AuditTeaser.tsx: replace hardcoded teal gradient from-[#0D9488] to-[#0F766E] with from-[#00AEEF] to-[#0090C8]
+- [x] Fix AuditTeaser.tsx: replace hardcoded text-[#0D9488] with text-[#00AEEF] on CTA button
+- [x] Fix Pricing.tsx: replace hardcoded teal gradient from-[#0D9488] to-[#0F766E] with from-[#00AEEF] to-[#0090C8]
+- [x] Fix Pricing.tsx: replace hardcoded text-[#0D9488] with text-[#00AEEF] on CTA button

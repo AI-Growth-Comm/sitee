@@ -283,14 +283,14 @@ export default function Pricing() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="rounded-2xl bg-gradient-to-br from-[#0D9488] to-[#0F766E] p-10 text-center space-y-5">
+        <div className="rounded-2xl bg-gradient-to-br from-[#00AEEF] to-[#0090C8] p-10 text-center space-y-5">
           <h2 className="text-2xl md:text-3xl font-bold text-white">Ready to grow your site?</h2>
           <p className="text-white/80 max-w-md mx-auto">
             Run your first free audit in under 60 seconds — no credit card, no setup.
           </p>
           <Button
             onClick={() => navigate("/")}
-            className="bg-white text-[#0D9488] font-bold px-8 py-3 rounded-xl hover:bg-white/95 shadow-md text-sm"
+            className="bg-white text-[#00AEEF] font-bold px-8 py-3 rounded-xl hover:bg-white/95 shadow-md text-sm"
           >
             <Zap className="w-4 h-4 mr-2" />
             Run a Free Audit
