@@ -1,3 +1,4 @@
+import { getLoginUrl } from "@/const";
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
@@ -90,7 +91,8 @@ const cardVariant = {
 export default function Home() {
   const [, navigate] = useLocation();
   const search = useSearch();
-  const { user, isAuthenticated, openSignIn } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const handleSignIn = () => { window.location.href = getLoginUrl(); };
   const { theme, toggleTheme } = useTheme();
 
   const searchParams = new URLSearchParams(search);
@@ -230,7 +232,7 @@ export default function Home() {
             ) : (
               <>
                 <button onClick={() => navigate("/pricing")} className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block px-2 py-1">Pricing</button>
-                <button onClick={() => openSignIn()} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-1.5 hover:border-primary/50">
+                <button onClick={() => handleSignIn()} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-1.5 hover:border-primary/50">
                   <LogIn className="w-3.5 h-3.5" /><span>Sign In</span>
                 </button>
               </>

@@ -1,9 +1,10 @@
+import { getLoginUrl } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { useClerk } from "@clerk/clerk-react";
+
 import {
   AlertCircle,
   ArrowLeft,
@@ -55,7 +56,7 @@ function ScoreMini({ score }: { score: number }) {
 export default function SavedReports() {
   const [, navigate] = useLocation();
   const { isAuthenticated, loading } = useAuth();
-  const { openSignIn } = useClerk();
+  
   const { theme, toggleTheme } = useTheme();
   const utils = trpc.useUtils();
 
@@ -88,7 +89,7 @@ export default function SavedReports() {
           </div>
           <h2 className="text-xl font-bold text-foreground">Sign in to view saved reports</h2>
           <p className="text-muted-foreground text-sm">Your saved SEO reports will appear here after you sign in.</p>
-          <Button onClick={() => openSignIn()} className="w-full">
+          <Button onClick={() => { window.location.href = getLoginUrl(); }} className="w-full">
             Sign In
           </Button>
           <Button variant="outline" onClick={() => navigate("/")} className="w-full gap-2">

@@ -1,5 +1,6 @@
+import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
-import { useClerk } from "@clerk/clerk-react";
+
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
@@ -106,12 +107,12 @@ export default function Pricing() {
   const [, navigate] = useLocation();
   const { isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { openSignIn } = useClerk();
+  
 
   function getPlanCta(plan: typeof PLANS[number]) {
-    if (plan.id === "free") return isAuthenticated ? () => navigate("/dashboard") : () => openSignIn();
+    if (plan.id === "free") return isAuthenticated ? () => navigate("/dashboard") : () => { window.location.href = getLoginUrl(); };
     if (plan.id === "agency") return () => window.location.href = "mailto:hello@trysitee.com?subject=Agency%20Plan";
-    return () => openSignIn();
+    return () => { window.location.href = getLoginUrl(); };
   }
 
   return (
@@ -145,7 +146,7 @@ export default function Pricing() {
               Dashboard
             </Button>
           ) : (
-            <Button size="sm" onClick={() => openSignIn()} className="gap-1.5 bg-primary text-primary-foreground">
+            <Button size="sm" onClick={() => { window.location.href = getLoginUrl(); }} className="gap-1.5 bg-primary text-primary-foreground">
               <Zap className="w-3.5 h-3.5" /> Sign In Free
             </Button>
           )}

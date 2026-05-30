@@ -1,7 +1,8 @@
+import { getLoginUrl } from "@/const";
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { useClerk } from "@clerk/clerk-react";
+
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, CheckCircle, Lock, Zap, Loader2, AlertCircle, TrendingUp, Key,
@@ -71,7 +72,7 @@ const UNLOCK_FEATURES = [
 export default function AuditTeaser() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
-  const { openSignIn } = useClerk();
+  
   const auditId = parseInt(params.id ?? "0", 10);
 
   const { data, isLoading, error } = trpc.audit.get.useQuery(
@@ -83,7 +84,7 @@ export default function AuditTeaser() {
     if (typeof window !== "undefined") {
       sessionStorage.setItem("sitee_return_to", `/audit/${auditId}`);
     }
-    openSignIn();
+    window.location.href = getLoginUrl();
   };
 
   // If user is now signed in, redirect to full results
